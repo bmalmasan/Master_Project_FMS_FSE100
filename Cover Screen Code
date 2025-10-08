@@ -1,0 +1,112 @@
+let screen = "home";
+let buttons = {};
+
+function setup() {
+  createCanvas(600, 400);
+  
+  buttons.balloon = createButton('🎈 Balloon Popping Game');
+  buttons.tracing = createButton('🔺 Shape Tracing Game');
+  buttons.matching = createButton('🧩 Matching Game');
+  buttons.howto = createButton('❓ How To Play');
+  
+  let startY = 180;
+  let spacing = 50;
+  let x = 200;
+  
+  buttons.balloon.position(x, startY);
+  buttons.tracing.position(x, startY + spacing);
+  buttons.matching.position(x, startY + spacing * 2);
+  buttons.howto.position(x, startY + spacing * 3);
+  
+  buttons.balloon.mousePressed(() => changeScreen("balloon"));
+  buttons.tracing.mousePressed(() => changeScreen("tracing"));
+  buttons.matching.mousePressed(() => changeScreen("matching"));
+  buttons.howto.mousePressed(() => changeScreen("howto"));
+}
+
+function draw() {
+  if (screen === "home") {
+    drawHomeScreen();
+  } else if (screen === "balloon") {
+    drawBalloonGame();
+  } else if (screen === "tracing") {
+    drawTracingGame();
+  } else if (screen === "matching") {
+    drawMatchingGame();
+  } else if (screen === "howto") {
+    drawHowTo();
+  }
+}
+
+function drawHomeScreen() {
+  background(255, 230, 180);
+  noStroke();
+  fill(255, 180, 200);
+  circle(100, 100, 80);
+  fill(180, 255, 200);
+  circle(500, 80, 100);
+  fill(180, 200, 255);
+  circle(150, 300, 120);
+  
+  textAlign(CENTER, CENTER);
+  textSize(36);
+  fill(255, 100, 150);
+  text("🌈 A Game for Toddlers 🌈", width / 2, 100);
+}
+
+function changeScreen(newScreen) {
+  screen = newScreen;
+  for (let key in buttons) {
+    buttons[key].hide();
+  }
+}
+
+function keyPressed() {
+  if (key === 'H') {
+    screen = "home";
+    for (let key in buttons) {
+      buttons[key].show();
+    }
+  }
+}
+
+function drawBalloonGame() {
+  background(255, 200, 200);
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  fill(100, 0, 150);
+  text("🎈 Balloon Popping Game 🎈", width / 2, height / 2);
+  textSize(16);
+  text("(Press H to go home)", width / 2, height - 40);
+}
+
+function drawTracingGame() {
+  background(200, 255, 200);
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  fill(0, 100, 150);
+  text("🔺 Shape Tracing Game 🔺", width / 2, height / 2);
+  textSize(16);
+  text("(Press H to go home)", width / 2, height - 40);
+}
+
+function drawMatchingGame() {
+  background(200, 200, 255);
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  fill(150, 50, 100);
+  text("🧩 Matching Game 🧩", width / 2, height / 2);
+  textSize(16);
+  text("(Press H to go home)", width / 2, height - 40);
+}
+
+function drawHowTo() {
+  background(255, 240, 180);
+  textAlign(CENTER, CENTER);
+  textSize(28);
+  fill(100, 80, 0);
+  text("❓ How to Play ❓", width / 2, 100);
+  
+  textSize(18);
+  text("🎈 Pop balloons by clicking on them!\n🔺 Trace shapes by following lines!\n🧩 Match shapes or colors together!\n\nPress 'H' to go back home.", width / 2, height / 2);
+}
