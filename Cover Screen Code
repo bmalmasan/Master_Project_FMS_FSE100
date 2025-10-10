@@ -3,6 +3,7 @@ let buttons = {};
 let bubbleWidth = 260;
 let bubbleHeight = 50;
 let fontRegular;
+let flowers = [];
 
 function preload() {
   fontRegular = 'Comic Sans MS';
@@ -39,24 +40,28 @@ function setup() {
   buttons.tracing.mousePressed(() => changeScreen("tracing"));
   buttons.matching.mousePressed(() => changeScreen("matching"));
   buttons.howto.mousePressed(() => changeScreen("howto"));
+
+  // Initialize flowers
+  for (let i = 0; i < 10; i++) {
+    flowers.push({ x: random(width), y: random(height - 60, height - 20), angle: random(TWO_PI) });
+  }
 }
 
 function draw() {
+  drawGardenBackground();
+
   if (screen === "home") {
-    drawGardenBackground();
     drawHomeScreen();
   } else if (screen === "balloon") {
-    drawGardenBackground();
     drawBalloonGame();
   } else if (screen === "tracing") {
-    drawGardenBackground();
     drawTracingGame();
   } else if (screen === "matching") {
-    drawGardenBackground();
     drawMatchingGame();
   } else if (screen === "howto") {
-    drawGardenBackground();
     drawHowTo();
+  } else if (screen === "blank") {
+    drawBlankGame();
   }
 }
 
@@ -81,9 +86,11 @@ function drawGardenBackground() {
   ellipse(150, height - 40, 300, 100);
   ellipse(450, height - 40, 400, 120);
 
-  // Flowers
-  for (let i = 0; i < 10; i++) {
-    drawFlower(random(width), random(height - 60, height - 20));
+  // Flowers with slower swaying motion
+  for (let i = 0; i < flowers.length; i++) {
+    let f = flowers[i];
+    f.angle += 0.002; // slow down motion
+    drawFlower(f.x + sin(f.angle) * 2, f.y);
   }
 }
 
@@ -133,13 +140,31 @@ function drawBackButton() {
   text("🏡 Return to Home", width / 2, height - 40);
 }
 
+function drawNextButton() {
+  fill("#FFD1DC");
+  stroke("#ff8ba0");
+  strokeWeight(2);
+  rectMode(CENTER);
+  rect(width / 2, height - 90, 180, 40, 15);
+  noStroke();
+  fill("#7a0043");
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  text("➡️ Next", width / 2, height - 90);
+}
+
 function mousePressed() {
   if (screen !== "home") {
+    // Back button
     if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 60 && mouseY < height - 20) {
       screen = "home";
       for (let key in buttons) {
         buttons[key].show();
       }
+    }
+    // Next button
+    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 110 && mouseY < height - 70) {
+      screen = "blank";
     }
   }
 }
@@ -151,6 +176,7 @@ function drawBalloonGame() {
   textFont(fontRegular);
   text("🎈 Balloon Popping Game 🎈", width / 2, height / 2);
   drawBackButton();
+  drawNextButton();
 }
 
 function drawTracingGame() {
@@ -160,6 +186,7 @@ function drawTracingGame() {
   textFont(fontRegular);
   text("🔺 Shape Tracing Game 🔺", width / 2, height / 2);
   drawBackButton();
+  drawNextButton();
 }
 
 function drawMatchingGame() {
@@ -169,6 +196,7 @@ function drawMatchingGame() {
   textFont(fontRegular);
   text("🧩 Matching Game 🧩", width / 2, height / 2);
   drawBackButton();
+  drawNextButton();
 }
 
 function drawHowTo() {
@@ -180,5 +208,15 @@ function drawHowTo() {
   
   textSize(18);
   text("🎈 Pop balloons by clicking on them!\n🔺 Trace shapes by following lines!\n🧩 Match shapes or colors together!\n\nPress 'Return to Home' to go back.", width / 2, height / 2);
+  drawBackButton();
+  drawNextButton();
+}
+
+function drawBlankGame() {
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  fill("#333");
+  textFont(fontRegular);
+  text("🌸 Blank Game Page 🌸", width / 2, height / 2);
   drawBackButton();
 }
