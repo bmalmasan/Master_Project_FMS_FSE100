@@ -4,6 +4,7 @@ let bubbleWidth = 260;
 let bubbleHeight = 50;
 let fontRegular;
 let flowers = [];
+let bgOffset = 0; // for smooth background gradient animation
 
 function preload() {
   fontRegular = 'Comic Sans MS';
@@ -41,9 +42,15 @@ function setup() {
   buttons.matching.mousePressed(() => changeScreen("matching"));
   buttons.howto.mousePressed(() => changeScreen("howto"));
 
-  // Initialize flowers
+  // Initialize flowers with color transition info
   for (let i = 0; i < 10; i++) {
-    flowers.push({ x: random(width), y: random(height - 60, height - 20), angle: random(TWO_PI) });
+    flowers.push({
+      x: random(width),
+      y: random(height - 60, height - 20),
+      angle: random(TWO_PI),
+      currentColor: color(random(255), random(255), random(255)), // starting color
+      targetColor: color(random(255), random(255), random(255))   // target for smooth transition
+    });
   }
 }
 
@@ -66,10 +73,18 @@ function draw() {
 }
 
 function drawGardenBackground() {
-  // Sky gradient
+  // Slowly shift the gradient
+  bgOffset += 0.0002; // very slow for calm effect
+
+  let topColor = color("#aee6ff");
+  let bottomColor = color("#e0ffe7");
+  let t = sin(bgOffset) * 0.5 + 0.5;
+  let currentTop = lerpColor(topColor, color("#b0dfff"), t);
+  let currentBottom = lerpColor(bottomColor, color("#d6ffe0"), t);
+
   for (let y = 0; y < height; y++) {
     let inter = map(y, 0, height, 0, 1);
-    let c = lerpColor(color("#aee6ff"), color("#e0ffe7"), inter);
+    let c = lerpColor(currentTop, currentBottom, inter);
     stroke(c);
     line(0, y, width, y);
   }
@@ -86,18 +101,26 @@ function drawGardenBackground() {
   ellipse(150, height - 40, 300, 100);
   ellipse(450, height - 40, 400, 120);
 
-  // Flowers with slower swaying motion
+  // Flowers with slow sway and color transitions
   for (let i = 0; i < flowers.length; i++) {
     let f = flowers[i];
-    f.angle += 0.002; // slow down motion
-    drawFlower(f.x + sin(f.angle) * 2, f.y);
+    f.angle += 0.1; // slow sway
+    drawFlower(f.x + sin(f.angle) * 2, f.y, f);
   }
 }
 
-function drawFlower(x, y) {
-  let colors = ["#FF69B4", "#FFB6C1", "#FFA500", "#FFD700", "#ADFF2F"];
-  let petalColor = random(colors);
-  
+function drawFlower(x, y, flower) {
+  // Smoothly transition to target color
+  flower.currentColor = lerpColor(flower.currentColor, flower.targetColor, 0.005); // slow lerp
+
+  // If close enough to target, pick a new target color
+  if (dist(red(flower.currentColor), red(flower.targetColor),
+           green(flower.currentColor), green(flower.targetColor)) < 1) {
+    flower.targetColor = color(random(255), random(255), random(255));
+  }
+
+  let petalColor = flower.currentColor;
+
   noStroke();
   fill("green");
   rect(x - 1, y, 2, 20);
@@ -108,6 +131,7 @@ function drawFlower(x, y) {
     let py = y - 10 + sin(a) * 8;
     ellipse(px, py, 10, 10);
   }
+
   fill("#FFD700");
   circle(x, y - 10, 8);
 }
