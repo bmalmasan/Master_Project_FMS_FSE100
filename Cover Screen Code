@@ -5,13 +5,15 @@ let bubbleHeight = 50;
 let fontRegular;
 let flowers = [];
 let bgOffset = 0; // for smooth background gradient animation
+let cnv;
 
 function preload() {
   fontRegular = 'Comic Sans MS';
 }
 
 function setup() {
-  createCanvas(600, 400);
+  cnv = createCanvas(600, 400);
+  cnv.mousePressed(handleCanvasClick);
   
   buttons.balloon = createButton('🎈 Balloon Popping Game');
   buttons.tracing = createButton('🔺 Shape Tracing Game');
@@ -69,6 +71,22 @@ function draw() {
     drawHowTo();
   } else if (screen === "blank") {
     drawBlankGame();
+  }
+}
+
+function handleCanvasClick() {
+  if (screen !== "home") {
+    // Back
+    if (mouseX > width/2 - 90 && mouseX < width/2 + 90 &&
+        mouseY > height - 60 && mouseY < height - 20) {
+      screen = "home";
+      for (let key in buttons) buttons[key].show();
+    }
+    // Next
+    if (mouseX > width/2 - 90 && mouseX < width/2 + 90 &&
+        mouseY > height - 110 && mouseY < height - 70) {
+      screen = "blank";
+    }
   }
 }
 
@@ -177,21 +195,7 @@ function drawNextButton() {
   text("➡️ Next", width / 2, height - 90);
 }
 
-function mousePressed() {
-  if (screen !== "home") {
-    // Back button
-    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 60 && mouseY < height - 20) {
-      screen = "home";
-      for (let key in buttons) {
-        buttons[key].show();
-      }
-    }
-    // Next button
-    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 110 && mouseY < height - 70) {
-      screen = "blank";
-    }
-  }
-}
+
 
 function drawBalloonGame() {
   textAlign(CENTER, CENTER);
