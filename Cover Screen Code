@@ -1,5 +1,12 @@
 let screen = "home";
 let buttons = {};
+let bubbleWidth = 260;
+let bubbleHeight = 50;
+let fontRegular;
+
+function preload() {
+  fontRegular = 'Comic Sans MS';
+}
 
 function setup() {
   createCanvas(600, 400);
@@ -10,14 +17,24 @@ function setup() {
   buttons.howto = createButton('❓ How To Play');
   
   let startY = 180;
-  let spacing = 50;
-  let x = 200;
+  let spacing = 60;
+  let x = width / 2 - bubbleWidth / 2;
   
+  for (let key in buttons) {
+    buttons[key].size(bubbleWidth, bubbleHeight);
+    buttons[key].style("font-size", "18px");
+    buttons[key].style("font-family", fontRegular);
+    buttons[key].style("background-color", "#FFD1DC");
+    buttons[key].style("border-radius", "20px");
+    buttons[key].style("border", "2px solid #ff8ba0");
+    buttons[key].style("color", "#7a0043");
+  }
+
   buttons.balloon.position(x, startY);
   buttons.tracing.position(x, startY + spacing);
   buttons.matching.position(x, startY + spacing * 2);
   buttons.howto.position(x, startY + spacing * 3);
-  
+
   buttons.balloon.mousePressed(() => changeScreen("balloon"));
   buttons.tracing.mousePressed(() => changeScreen("tracing"));
   buttons.matching.mousePressed(() => changeScreen("matching"));
@@ -26,32 +43,74 @@ function setup() {
 
 function draw() {
   if (screen === "home") {
+    drawGardenBackground();
     drawHomeScreen();
   } else if (screen === "balloon") {
+    drawGardenBackground();
     drawBalloonGame();
   } else if (screen === "tracing") {
+    drawGardenBackground();
     drawTracingGame();
   } else if (screen === "matching") {
+    drawGardenBackground();
     drawMatchingGame();
   } else if (screen === "howto") {
+    drawGardenBackground();
     drawHowTo();
   }
 }
 
-function drawHomeScreen() {
-  background(255, 230, 180);
+function drawGardenBackground() {
+  // Sky gradient
+  for (let y = 0; y < height; y++) {
+    let inter = map(y, 0, height, 0, 1);
+    let c = lerpColor(color("#aee6ff"), color("#e0ffe7"), inter);
+    stroke(c);
+    line(0, y, width, y);
+  }
+
+  // Sun
   noStroke();
-  fill(255, 180, 200);
-  circle(100, 100, 80);
-  fill(180, 255, 200);
-  circle(500, 80, 100);
-  fill(180, 200, 255);
-  circle(150, 300, 120);
+  fill(255, 255, 120);
+  ellipse(80, 80, 100, 100);
+
+  // Grass and hills
+  fill(100, 200, 100);
+  rect(0, height - 80, width, 80);
+  fill(90, 180, 90);
+  ellipse(150, height - 40, 300, 100);
+  ellipse(450, height - 40, 400, 120);
+
+  // Flowers
+  for (let i = 0; i < 10; i++) {
+    drawFlower(random(width), random(height - 60, height - 20));
+  }
+}
+
+function drawFlower(x, y) {
+  let colors = ["#FF69B4", "#FFB6C1", "#FFA500", "#FFD700", "#ADFF2F"];
+  let petalColor = random(colors);
   
+  noStroke();
+  fill("green");
+  rect(x - 1, y, 2, 20);
+
+  fill(petalColor);
+  for (let a = 0; a < TWO_PI; a += PI / 3) {
+    let px = x + cos(a) * 8;
+    let py = y - 10 + sin(a) * 8;
+    ellipse(px, py, 10, 10);
+  }
+  fill("#FFD700");
+  circle(x, y - 10, 8);
+}
+
+function drawHomeScreen() {
   textAlign(CENTER, CENTER);
-  textSize(36);
-  fill(255, 100, 150);
-  text("🌈 A Game for Toddlers 🌈", width / 2, 100);
+  textSize(38);
+  fill("#ff66a3");
+  textFont(fontRegular);
+  text("🌼 A Garden of Fun 🌼", width / 2, 100);
 }
 
 function changeScreen(newScreen) {
@@ -61,52 +120,65 @@ function changeScreen(newScreen) {
   }
 }
 
-function keyPressed() {
-  if (key === 'H') {
-    screen = "home";
-    for (let key in buttons) {
-      buttons[key].show();
+function drawBackButton() {
+  fill("#FFB6C1");
+  stroke("#ff8ba0");
+  strokeWeight(2);
+  rectMode(CENTER);
+  rect(width / 2, height - 40, 180, 40, 15);
+  noStroke();
+  fill("#7a0043");
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  text("🏡 Return to Home", width / 2, height - 40);
+}
+
+function mousePressed() {
+  if (screen !== "home") {
+    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 60 && mouseY < height - 20) {
+      screen = "home";
+      for (let key in buttons) {
+        buttons[key].show();
+      }
     }
   }
 }
 
 function drawBalloonGame() {
-  background(255, 200, 200);
   textAlign(CENTER, CENTER);
   textSize(32);
-  fill(100, 0, 150);
+  fill("#7a0043");
+  textFont(fontRegular);
   text("🎈 Balloon Popping Game 🎈", width / 2, height / 2);
-  textSize(16);
-  text("(Press H to go home)", width / 2, height - 40);
+  drawBackButton();
 }
 
 function drawTracingGame() {
-  background(200, 255, 200);
   textAlign(CENTER, CENTER);
   textSize(32);
-  fill(0, 100, 150);
+  fill("#006d77");
+  textFont(fontRegular);
   text("🔺 Shape Tracing Game 🔺", width / 2, height / 2);
-  textSize(16);
-  text("(Press H to go home)", width / 2, height - 40);
+  drawBackButton();
 }
 
 function drawMatchingGame() {
-  background(200, 200, 255);
   textAlign(CENTER, CENTER);
   textSize(32);
-  fill(150, 50, 100);
+  fill("#8b008b");
+  textFont(fontRegular);
   text("🧩 Matching Game 🧩", width / 2, height / 2);
-  textSize(16);
-  text("(Press H to go home)", width / 2, height - 40);
+  drawBackButton();
 }
 
 function drawHowTo() {
-  background(255, 240, 180);
   textAlign(CENTER, CENTER);
-  textSize(28);
-  fill(100, 80, 0);
+  textSize(26);
+  fill("#7a0043");
+  textFont(fontRegular);
   text("❓ How to Play ❓", width / 2, 100);
   
   textSize(18);
-  text("🎈 Pop balloons by clicking on them!\n🔺 Trace shapes by following lines!\n🧩 Match shapes or colors together!\n\nPress 'H' to go back home.", width / 2, height / 2);
+  text("🎈 Pop balloons by clicking on them!\n🔺 Trace shapes by following lines!\n🧩 Match shapes or colors together!\n\nPress 'Return to Home' to go back.", width / 2, height / 2);
+  drawBackButton();
 }
