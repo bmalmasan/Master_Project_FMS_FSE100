@@ -18,7 +18,7 @@ function setup() {
   buttons.matching = createButton('🧩 Matching Game');
   buttons.howto = createButton('❓ How To Play');
   
-  let startY = 180;
+  let startY = 160;
   let spacing = 60;
   let x = width / 2 - bubbleWidth / 2;
   
@@ -233,7 +233,6 @@ function drawHowTo() {
   textSize(18);
   text("🎈 Pop balloons by clicking on them!\n🔺 Trace shapes by following lines!\n🧩 Match shapes or colors together!\n\nPress 'Return to Home' to go back.", width / 2, height / 2);
   drawBackButton();
-  drawNextButton();
 }
 
 function drawBlankGame() {
