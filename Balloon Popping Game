@@ -1,1 +1,365 @@
+// 🌼 A Garden of Fun - Full Version
+// Kid-friendly mini game collection
+// 🎈 Balloon Popping Game included
+// Built with p5.js and p5.sound.js
+
+// ---------------------------------------
+// 🌟 GLOBAL VARIABLES
+// ---------------------------------------
+let screen = "home";
+let buttons = {};
+let bubbleWidth = 260;
+let bubbleHeight = 50;
+let fontRegular;
+let flowers = [];
+let bgOffset = 0;
+let cnv;
+
+// Balloon game variables
+let balloons = [];
+let popParticles = [];
+let score = 0;
+let popSound;
+
+// ---------------------------------------
+// 🎵 PRELOAD
+// ---------------------------------------
+function preload() {
+  fontRegular = 'Comic Sans MS';
+  soundFormats('mp3', 'wav');
+  // A fun “pop” sound (you can replace this link)
+  popSound = loadSound('https://cdn.jsdelivr.net/gh/jshawl/p5-sound-examples@master/examples/assets/doorbell.mp3');
+}
+
+// ---------------------------------------
+// 🌸 SETUP
+// ---------------------------------------
+function setup() {
+  cnv = createCanvas(600, 400);
+  cnv.mousePressed(handleCanvasClick);
+
+  // Buttons for menu
+  buttons.balloon = createButton('🎈 Balloon Popping Game');
+  buttons.tracing = createButton('🔺 Shape Tracing Game');
+  buttons.matching = createButton('🧩 Matching Game');
+  buttons.howto = createButton('❓ How To Play');
+
+  let startY = 160;
+  let spacing = 60;
+  let x = width / 2 - bubbleWidth / 2;
+
+  for (let key in buttons) {
+    buttons[key].size(bubbleWidth, bubbleHeight);
+    buttons[key].style("font-size", "18px");
+    buttons[key].style("font-family", fontRegular);
+    buttons[key].style("background-color", "#FFD1DC");
+    buttons[key].style("border-radius", "20px");
+    buttons[key].style("border", "2px solid #ff8ba0");
+    buttons[key].style("color", "#7a0043");
+  }
+
+  buttons.balloon.position(x, startY);
+  buttons.tracing.position(x, startY + spacing);
+  buttons.matching.position(x, startY + spacing * 2);
+  buttons.howto.position(x, startY + spacing * 3);
+
+  buttons.balloon.mousePressed(() => changeScreen("balloon"));
+  buttons.tracing.mousePressed(() => changeScreen("tracing"));
+  buttons.matching.mousePressed(() => changeScreen("matching"));
+  buttons.howto.mousePressed(() => changeScreen("howto"));
+
+  // Flower setup
+  for (let i = 0; i < 10; i++) {
+    flowers.push({
+      x: random(width),
+      y: random(height - 60, height - 20),
+      angle: random(TWO_PI),
+      currentColor: color(random(255), random(255), random(255)),
+      targetColor: color(random(255), random(255), random(255))
+    });
+  }
+}
+
+// ---------------------------------------
+// 🌈 DRAW LOOP
+// ---------------------------------------
+function draw() {
+  drawGardenBackground();
+
+  if (screen === "home") {
+    drawHomeScreen();
+  } else if (screen === "balloon") {
+    drawBalloonGame();
+  } else if (screen === "tracing") {
+    drawTracingGame();
+  } else if (screen === "matching") {
+    drawMatchingGame();
+  } else if (screen === "howto") {
+    drawHowTo();
+  } else if (screen === "blank") {
+    drawBlankGame();
+  }
+}
+
+// ---------------------------------------
+// 🖱️ CLICK HANDLER
+// ---------------------------------------
+function handleCanvasClick() {
+  if (screen !== "home") {
+    // Back button
+    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 &&
+      mouseY > height - 60 && mouseY < height - 20) {
+      screen = "home";
+      for (let key in buttons) buttons[key].show();
+    }
+
+    // Next button
+    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 &&
+      mouseY > height - 110 && mouseY < height - 70) {
+      screen = "blank";
+    }
+  }
+}
+
+// ---------------------------------------
+// 🌻 BACKGROUND (animated garden)
+// ---------------------------------------
+function drawGardenBackground() {
+  bgOffset += 0.0002;
+  let topColor = color("#aee6ff");
+  let bottomColor = color("#e0ffe7");
+  let t = sin(bgOffset) * 0.5 + 0.5;
+  let currentTop = lerpColor(topColor, color("#b0dfff"), t);
+  let currentBottom = lerpColor(bottomColor, color("#d6ffe0"), t);
+
+  for (let y = 0; y < height; y++) {
+    let inter = map(y, 0, height, 0, 1);
+    let c = lerpColor(currentTop, currentBottom, inter);
+    stroke(c);
+    line(0, y, width, y);
+  }
+
+  // Sun and hills
+  noStroke();
+  fill(255, 255, 120);
+  ellipse(80, 80, 100, 100);
+  fill(100, 200, 100);
+  rect(0, height - 80, width, 80);
+  fill(90, 180, 90);
+  ellipse(150, height - 40, 300, 100);
+  ellipse(450, height - 40, 400, 120);
+
+  // Flowers
+  for (let f of flowers) {
+    f.angle += 0.1;
+    drawFlower(f.x + sin(f.angle) * 2, f.y, f);
+  }
+}
+
+function drawFlower(x, y, flower) {
+  flower.currentColor = lerpColor(flower.currentColor, flower.targetColor, 0.005);
+  if (dist(red(flower.currentColor), red(flower.targetColor),
+    green(flower.currentColor), green(flower.targetColor)) < 1) {
+    flower.targetColor = color(random(255), random(255), random(255));
+  }
+
+  let petalColor = flower.currentColor;
+  noStroke();
+  fill("green");
+  rect(x - 1, y, 2, 20);
+  fill(petalColor);
+  for (let a = 0; a < TWO_PI; a += PI / 3) {
+    let px = x + cos(a) * 8;
+    let py = y - 10 + sin(a) * 8;
+    ellipse(px, py, 10, 10);
+  }
+  fill("#FFD700");
+  circle(x, y - 10, 8);
+}
+
+// ---------------------------------------
+// 🏠 HOME SCREEN
+// ---------------------------------------
+function drawHomeScreen() {
+  textAlign(CENTER, CENTER);
+  textSize(38);
+  fill("#ff66a3");
+  textFont(fontRegular);
+  text("🌼 A Garden of Fun 🌼", width / 2, 100);
+}
+
+function changeScreen(newScreen) {
+  screen = newScreen;
+  for (let key in buttons) {
+    buttons[key].hide();
+  }
+}
+
+// ---------------------------------------
+// 🔙 UNIVERSAL BUTTONS
+// ---------------------------------------
+function drawBackButton() {
+  fill("#FFB6C1");
+  stroke("#ff8ba0");
+  strokeWeight(2);
+  rectMode(CENTER);
+  rect(width / 2, height - 40, 180, 40, 15);
+  noStroke();
+  fill("#7a0043");
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  text("🏡 Return to Home", width / 2, height - 40);
+}
+
+function drawNextButton() {
+  fill("#FFD1DC");
+  stroke("#ff8ba0");
+  strokeWeight(2);
+  rectMode(CENTER);
+  rect(width / 2, height - 90, 180, 40, 15);
+  noStroke();
+  fill("#7a0043");
+  textAlign(CENTER, CENTER);
+  textSize(18);
+  text("➡️ Next", width / 2, height - 90);
+}
+
+// ---------------------------------------
+// 🎈 BALLOON POPPING GAME
+// ---------------------------------------
+function drawBalloonGame() {
+  drawGardenBackground();
+
+  // Spawn new balloons
+  if (frameCount % 60 === 0 && balloons.length < 10) {
+    balloons.push(createBalloon());
+  }
+
+  // Update and draw balloons
+  for (let i = balloons.length - 1; i >= 0; i--) {
+    let b = balloons[i];
+    b.y -= b.speed;
+    b.x += sin(frameCount * 0.05 + b.wiggle) * 1.5;
+
+    stroke(150);
+    line(b.x, b.y, b.x, b.y + 40);
+    noStroke();
+    fill(b.color);
+    ellipse(b.x, b.y, b.size * 0.9, b.size);
+
+    if (b.y < -50) balloons.splice(i, 1);
+  }
+
+  // Popping particles
+  for (let i = popParticles.length - 1; i >= 0; i--) {
+    let p = popParticles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= 3;
+    fill(p.color.levels[0], p.color.levels[1], p.color.levels[2], p.life);
+    noStroke();
+    ellipse(p.x, p.y, 6);
+    if (p.life <= 0) popParticles.splice(i, 1);
+  }
+
+  // Title + Score
+  noStroke();
+  fill("#7a0043");
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  textFont(fontRegular);
+  text("🎈 Balloon Popping Game 🎈", width / 2, 40);
+  textSize(20);
+  text(`Score: ${score}`, width - 80, 30);
+
+  drawBackButton();
+}
+
+// Balloon creation
+function createBalloon() {
+  return {
+    x: random(50, width - 50),
+    y: height + 50,
+    size: random(50, 90),
+    color: color(random(150, 255), random(100, 255), random(150, 255)),
+    speed: random(1.2, 2.5),
+    wiggle: random(TWO_PI)
+  };
+}
+
+// Click to pop
+function mousePressed() {
+  if (screen === "balloon") {
+    for (let i = balloons.length - 1; i >= 0; i--) {
+      let b = balloons[i];
+      if (dist(mouseX, mouseY, b.x, b.y) < b.size / 2) {
+        makePopEffect(b);
+        balloons.splice(i, 1);
+        score++;
+        if (popSound && !popSound.isPlaying()) popSound.play();
+        return;
+      }
+    }
+  }
+  handleCanvasClick();
+}
+
+// Pop animation
+function makePopEffect(b) {
+  for (let i = 0; i < 15; i++) {
+    popParticles.push({
+      x: b.x,
+      y: b.y,
+      vx: random(-2, 2),
+      vy: random(-2, 2),
+      life: 255,
+      color: b.color
+    });
+  }
+}
+
+// ---------------------------------------
+// 🧩 OTHER PLACEHOLDER GAMES
+// ---------------------------------------
+function drawTracingGame() {
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  fill("#006d77");
+  textFont(fontRegular);
+  text("🔺 Shape Tracing Game 🔺", width / 2, height / 2);
+  drawBackButton();
+  drawNextButton();
+}
+
+function drawMatchingGame() {
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  fill("#8b008b");
+  textFont(fontRegular);
+  text("🧩 Matching Game 🧩", width / 2, height / 2);
+  drawBackButton();
+  drawNextButton();
+}
+
+function drawHowTo() {
+  textAlign(CENTER, CENTER);
+  textSize(26);
+  fill("#7a0043");
+  textFont(fontRegular);
+  text("❓ How to Play ❓", width / 2, 100);
+
+  textSize(18);
+  text("🎈 Pop balloons by clicking on them!\n🔺 Trace shapes by following lines!\n🧩 Match shapes or colors together!\n\nPress 'Return to Home' to go back.",
+    width / 2, height / 2);
+  drawBackButton();
+}
+
+function drawBlankGame() {
+  textAlign(CENTER, CENTER);
+  textSize(32);
+  fill("#333");
+  textFont(fontRegular);
+  text("🌸 Blank Game Page 🌸", width / 2, height / 2);
+  drawBackButton();
+}
 
