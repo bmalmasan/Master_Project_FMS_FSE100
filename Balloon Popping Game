@@ -16,27 +16,43 @@ function drawBalloonGame() {
   }
   noStroke(); fill("#7a0043"); textAlign(CENTER); textSize(32);
   text("🎈 Balloon Popping Game 🎈", width / 2, 40); textSize(20);
-  text(`Score: ${score}`, width - 80, 30); drawBackButton();
+  text(`Score: ${score}`, width - 80, 30);
+  drawBackButton();
 }
 
 function mousePressed() {
-  if (screen === "balloon") {
+  if (screen === "balloon" && gameActive) {
+    let clickedBalloon = false;
     for (let i = balloons.length - 1; i >= 0; i--) {
       let b = balloons[i];
       if (dist(mouseX, mouseY, b.x, b.y) < b.s / 2) {
-        for (let j = 0; j < 15; j++) popParticles.push({ x: b.x, y: b.y, vx: random(-2, 2), vy: random(-2, 2), life: 255, c: b.c });
-        balloons.splice(i, 1); score++; return;
+        clickedBalloon = true;
+        for (let j = 0; j < 15; j++)
+          popParticles.push({ x: b.x, y: b.y, vx: random(-2, 2), vy: random(-2, 2), life: 255, c: b.c });
+        balloons.splice(i, 1); score++; break;
       }
+    }
+    if (!clickedBalloon) {
+      gameActive = false;
+      screen = "gameover";
     }
   }
   handleCanvasClick();
 }
 
-// ❓ How To
-function drawHowTo() {
-  textAlign(CENTER); textSize(26); fill("#7a0043"); textFont(fontRegular);
-  text("❓ How to Play ❓", width / 2, 100);
-  textSize(18);
-  text("🎈 Pop balloons by clicking!\n🔺 Trace shapes!\n🧩 Match colors!\n\n🏡 Press 'Return to Home' to go back.", width / 2, height / 2);
+// 💥 Game Over Page
+function drawGameOver() {
+  drawGarden();
+  textAlign(CENTER); textSize(40); fill("#ff4d6d"); textFont(fontRegular);
+  text("💥 Game Over 💥", width / 2, height / 2 - 40);
+  textSize(22); fill("#7a0043");
+  text(`Your Score: ${score}`, width / 2, height / 2 + 10);
   drawBackButton();
+}
+
+function resetBalloonGame() {
+  score = 0;
+  balloons = [];
+  popParticles = [];
+  gameActive = false;
 }
