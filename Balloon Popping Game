@@ -16,7 +16,7 @@ function drawBalloonGame() {
   }
   noStroke(); fill("#7a0043"); textAlign(CENTER); textSize(32);
   text("🎈 Balloon Popping Game 🎈", width / 2, 40); textSize(20);
-  text(`Score: ${score}`, width - 80, 30);
+  text(`Score: ${score}`, width - 50, 30);
   drawBackButton();
 }
 
