@@ -83,15 +83,28 @@ function changeScreen(s) {
     setTimeout(() => (gameActive = true), 500);
   }
 }
+
+// ✅ FIXED: During balloon play, ignore the invisible Next button hitbox.
+// Only allow Return to Home in balloon screen; no Next.
 function handleCanvasClick() {
+  if (screen === "balloon") {
+    // Only BACK works in balloon gameplay
+    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 &&
+        mouseY > height - 60 && mouseY < height - 20) {
+      resetBalloonGame(); screen = "home"; for (let k in buttons) buttons[k].show();
+    }
+    return; // 🚫 don't check Next here
+  }
+
   if (screen !== "home" && screen !== "gameover") {
     // Back button
     if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 60 && mouseY < height - 20) {
       resetBalloonGame(); screen = "home"; for (let k in buttons) buttons[k].show();
     }
-    // Next button
-    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 110 && mouseY < height - 70)
+    // Next button (only on non-balloon screens)
+    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 110 && mouseY < height - 70) {
       screen = "blank";
+    }
   } else if (screen === "gameover") {
     // Home button
     if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 60 && mouseY < height - 20) {
@@ -119,7 +132,7 @@ function drawBalloonGame() {
   noStroke(); fill("#7a0043"); textAlign(CENTER); textSize(32);
   text("🎈 Balloon Popping Game 🎈", width / 2, 40); textSize(20);
   text(`Score: ${score}`, width - 50, 30);
-  drawBackButton();
+  drawBackButton(); // keep back button visible if you want; Next is disabled in handleCanvasClick()
 }
 
 function mousePressed() {
