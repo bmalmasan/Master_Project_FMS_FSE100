@@ -350,7 +350,7 @@ function drawShapeDragGame() {
   noStroke();
   fill("#7a0043");
   textSize(20);
-  text("Drop the " + targetShape + " here!", width / 2, height - 120);
+  text(targetShape + " here! --->", width / 4.5, height - 80);
 
   // Draw shapes
   for (let s of dragShapes) drawShape(s);
