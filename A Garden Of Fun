@@ -1,24 +1,49 @@
-// 🌼 A Garden of Fun - Balloon Game (No Sound)
 let screen = "home", buttons = {}, fontRegular, flowers = [], bgOffset = 0;
 let balloons = [], popParticles = [], score = 0, gameActive = false;
+
+// 🟣 Shape Drag & Drop variables
+let dragShapes = [];
+let targetShape = "";
+let draggedShape = null;
+let feedbackMsg = "";
+let feedbackColor = "#000";
+let feedbackTimer = 0;
+let dragScore = 0;
+let shapeList = ["circle", "square", "triangle", "star", "heart"];
+let gameWon = false;
 
 function preload() { fontRegular = 'Comic Sans MS'; }
 
 function setup() {
   createCanvas(600, 400).mousePressed(handleCanvasClick);
-  let opts = ["🎈 Balloon Popping Game", "🔺 Shape Tracing Game", "🧩 Matching Game", "❓ How To Play"];
-  let screens = ["balloon", "tracing", "matching", "howto"];
+
+  // Home menu buttons
+  let opts = [
+    "🎈 Balloon Popping Game",
+    "🔺 Shape Tracing Game",
+    "🟣 Shape Drag & Drop",
+    "❓ How To Play"
+  ];
+  let screens = ["balloon", "tracing", "dragdrop", "howto"];
+
   for (let i = 0; i < opts.length; i++) {
     let b = createButton(opts[i]);
     b.size(260, 50);
     b.style("font-size:18px;font-family:Comic Sans MS;background:#FFD1DC;border-radius:20px;border:2px solid #ff8ba0;color:#7a0043;");
-    b.position(width / 2 - 130, 160 + 60 * i);
+    b.position(width / 2 - 130, 150 + 60 * i);
     b.mousePressed(() => changeScreen(screens[i]));
     buttons[screens[i]] = b;
   }
+
+  // Animated flowers
   for (let i = 0; i < 10; i++)
-    flowers.push({ x: random(width), y: random(height - 60, height - 20), a: random(TWO_PI),
-      c: color(random(255), random(255), random(255)), t: color(random(255), random(255), random(255)) });
+    flowers.push({
+      x: random(width),
+      y: random(height - 60, height - 20),
+      a: random(TWO_PI),
+      c: color(random(255), random(255), random(255)),
+      t: color(random(255), random(255), random(255))
+    });
 }
 
 function draw() {
@@ -27,88 +52,130 @@ function draw() {
     case "home": drawHome(); break;
     case "balloon": drawBalloonGame(); break;
     case "tracing": drawPlaceholder("🔺 Shape Tracing Game 🔺", "#006d77"); break;
-    case "matching": drawPlaceholder("🧩 Matching Game 🧩", "#8b008b"); break;
+    case "dragdrop": drawShapeDragGame(); break;
     case "howto": drawHowTo(); break;
     case "gameover": drawGameOver(); break;
     case "blank": drawPlaceholder("🌸 Blank Game Page 🌸", "#333"); break;
   }
 }
 
-// 🌈 Background & Flowers
+// 🌸 Garden Background
 function drawGarden() {
   bgOffset += 0.0002;
   let top = lerpColor(color("#aee6ff"), color("#b0dfff"), sin(bgOffset) * 0.5 + 0.5);
   let bottom = lerpColor(color("#e0ffe7"), color("#d6ffe0"), sin(bgOffset) * 0.5 + 0.5);
-  for (let y = 0; y < height; y++) { stroke(lerpColor(top, bottom, y / height)); line(0, y, width, y); }
-  noStroke(); fill(255, 255, 120); ellipse(80, 80, 100); fill(100, 200, 100); rect(0, height - 80, width, 80);
-  fill(90, 180, 90); ellipse(150, height - 40, 300, 100); ellipse(450, height - 40, 400, 120);
-  for (let f of flowers) { f.a += 0.1; drawFlower(f.x + sin(f.a) * 2, f.y, f); }
+  for (let y = 0; y < height; y++) {
+    stroke(lerpColor(top, bottom, y / height));
+    line(0, y, width, y);
+  }
+  noStroke();
+  fill(255, 255, 120);
+  ellipse(80, 80, 100);
+  fill(100, 200, 100);
+  rect(0, height - 80, width, 80);
+  fill(90, 180, 90);
+  ellipse(150, height - 40, 300, 100);
+  ellipse(450, height - 40, 400, 120);
+  for (let f of flowers) {
+    f.a += 0.1;
+    drawFlower(f.x + sin(f.a) * 2, f.y, f);
+  }
 }
+
 function drawFlower(x, y, f) {
   f.c = lerpColor(f.c, f.t, 0.005);
-  if (dist(red(f.c), red(f.t), green(f.c), green(f.t)) < 1) f.t = color(random(255), random(255), random(255));
-  noStroke(); fill("green"); rect(x - 1, y, 2, 20);
-  fill(f.c); for (let a = 0; a < TWO_PI; a += PI / 3) ellipse(x + cos(a) * 8, y - 10 + sin(a) * 8, 10);
-  fill("#FFD700"); circle(x, y - 10, 8);
+  if (dist(red(f.c), red(f.t), green(f.c), green(f.t)) < 1)
+    f.t = color(random(255), random(255), random(255));
+  noStroke();
+  fill("green");
+  rect(x - 1, y, 2, 20);
+  fill(f.c);
+  for (let a = 0; a < TWO_PI; a += PI / 3)
+    ellipse(x + cos(a) * 8, y - 10 + sin(a) * 8, 10);
+  fill("#FFD700");
+  circle(x, y - 10, 8);
 }
 
 // 🏠 Menu & Buttons
 function drawHome() {
-  textAlign(CENTER); textSize(38); fill("#ff66a3"); textFont(fontRegular);
+  textAlign(CENTER);
+  textSize(38);
+  fill("#ff66a3");
+  textFont(fontRegular);
   text("🌼 A Garden of Fun 🌼", width / 2, 100);
 }
+
 function drawBackButton() {
-  fill("#FFB6C1"); stroke("#ff8ba0"); rectMode(CENTER);
+  fill("#FFB6C1");
+  stroke("#ff8ba0");
+  rectMode(CENTER);
   rect(width / 2, height - 40, 180, 40, 15);
-  noStroke(); fill("#7a0043"); textSize(18);
+  noStroke();
+  fill("#7a0043");
+  textSize(18);
   text("🏡 Return to Home", width / 2, height - 40);
 }
+
 function drawNextButton() {
-  fill("#FFD1DC"); stroke("#ff8ba0"); rectMode(CENTER);
+  fill("#FFD1DC");
+  stroke("#ff8ba0");
+  rectMode(CENTER);
   rect(width / 2, height - 90, 180, 40, 15);
-  noStroke(); fill("#7a0043"); textSize(18);
+  noStroke();
+  fill("#7a0043");
+  textSize(18);
   text("➡️ Next", width / 2, height - 90);
 }
+
 function drawPlaceholder(txt, col) {
-  textAlign(CENTER); textSize(32); fill(col); textFont(fontRegular);
+  textAlign(CENTER);
+  textSize(32);
+  fill(col);
+  textFont(fontRegular);
   text(txt, width / 2, height / 2);
-  drawBackButton(); drawNextButton();
+  drawBackButton();
+  drawNextButton();
 }
+
 function changeScreen(s) {
   screen = s;
   for (let k in buttons) buttons[k].hide();
   if (s === "balloon") {
     resetBalloonGame();
-    // Give the player a moment before the game starts
     setTimeout(() => (gameActive = true), 500);
   }
+  if (s === "dragdrop") startShapeDragGame();
 }
 
-// ✅ FIXED: During balloon play, ignore the invisible Next button hitbox.
-// Only allow Return to Home in balloon screen; no Next.
+// 🌼 Handle clicks for back/next
 function handleCanvasClick() {
   if (screen === "balloon") {
-    // Only BACK works in balloon gameplay
     if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 &&
         mouseY > height - 60 && mouseY < height - 20) {
-      resetBalloonGame(); screen = "home"; for (let k in buttons) buttons[k].show();
+      resetBalloonGame();
+      screen = "home";
+      for (let k in buttons) buttons[k].show();
     }
-    return; // 🚫 don't check Next here
+    return;
   }
 
   if (screen !== "home" && screen !== "gameover") {
-    // Back button
-    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 60 && mouseY < height - 20) {
-      resetBalloonGame(); screen = "home"; for (let k in buttons) buttons[k].show();
+    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 &&
+        mouseY > height - 60 && mouseY < height - 20) {
+      resetBalloonGame();
+      screen = "home";
+      for (let k in buttons) buttons[k].show();
     }
-    // Next button (only on non-balloon screens)
-    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 110 && mouseY < height - 70) {
+    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 &&
+        mouseY > height - 110 && mouseY < height - 70) {
       screen = "blank";
     }
   } else if (screen === "gameover") {
-    // Home button
-    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 && mouseY > height - 60 && mouseY < height - 20) {
-      resetBalloonGame(); screen = "home"; for (let k in buttons) buttons[k].show();
+    if (mouseX > width / 2 - 90 && mouseX < width / 2 + 90 &&
+        mouseY > height - 60 && mouseY < height - 20) {
+      resetBalloonGame();
+      screen = "home";
+      for (let k in buttons) buttons[k].show();
     }
   }
 }
@@ -117,50 +184,93 @@ function handleCanvasClick() {
 function drawBalloonGame() {
   drawGarden();
   if (frameCount % 60 === 0 && balloons.length < 10)
-    balloons.push({ x: random(50, width - 50), y: height + 50, s: random(50, 90),
-      c: color(random(150, 255), random(100, 255), random(150, 255)), sp: random(1.2, 2.5), w: random(TWO_PI) });
+    balloons.push({
+      x: random(50, width - 50),
+      y: height + 50,
+      s: random(50, 90),
+      c: color(random(150, 255), random(100, 255), random(150, 255)),
+      sp: random(1.2, 2.5),
+      w: random(TWO_PI)
+    });
   for (let i = balloons.length - 1; i >= 0; i--) {
-    let b = balloons[i]; b.y -= b.sp; b.x += sin(frameCount * 0.05 + b.w) * 1.5;
-    stroke(150); line(b.x, b.y, b.x, b.y + 40); noStroke(); fill(b.c); ellipse(b.x, b.y, b.s * 0.9, b.s);
+    let b = balloons[i];
+    b.y -= b.sp;
+    b.x += sin(frameCount * 0.05 + b.w) * 1.5;
+    stroke(150);
+    line(b.x, b.y, b.x, b.y + 40);
+    noStroke();
+    fill(b.c);
+    ellipse(b.x, b.y, b.s * 0.9, b.s);
     if (b.y < -50) balloons.splice(i, 1);
   }
   for (let i = popParticles.length - 1; i >= 0; i--) {
-    let p = popParticles[i]; p.x += p.vx; p.y += p.vy; p.life -= 3;
-    fill(p.c.levels[0], p.c.levels[1], p.c.levels[2], p.life); noStroke(); ellipse(p.x, p.y, 6);
+    let p = popParticles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life -= 3;
+    fill(p.c.levels[0], p.c.levels[1], p.c.levels[2], p.life);
+    noStroke();
+    ellipse(p.x, p.y, 6);
     if (p.life <= 0) popParticles.splice(i, 1);
   }
-  noStroke(); fill("#7a0043"); textAlign(CENTER); textSize(32);
-  text("🎈 Balloon Popping Game 🎈", width / 2, 40); textSize(20);
+  noStroke();
+  fill("#7a0043");
+  textAlign(CENTER);
+  textSize(32);
+  text("🎈 Balloon Popping Game 🎈", width / 2, 40);
+  textSize(20);
   text(`Score: ${score}`, width - 50, 30);
-  drawBackButton(); // keep back button visible if you want; Next is disabled in handleCanvasClick()
+  drawBackButton();
+}
+
+function handleBalloonClick() {
+  let clickedBalloon = false;
+  for (let i = balloons.length - 1; i >= 0; i--) {
+    let b = balloons[i];
+    if (dist(mouseX, mouseY, b.x, b.y) < b.s / 2) {
+      clickedBalloon = true;
+      for (let j = 0; j < 15; j++)
+        popParticles.push({
+          x: b.x,
+          y: b.y,
+          vx: random(-2, 2),
+          vy: random(-2, 2),
+          life: 255,
+          c: b.c
+        });
+      balloons.splice(i, 1);
+      score++;
+      break;
+    }
+  }
+  if (!clickedBalloon) {
+    gameActive = false;
+    screen = "gameover";
+  }
 }
 
 function mousePressed() {
-  if (screen === "balloon" && gameActive) {
-    let clickedBalloon = false;
-    for (let i = balloons.length - 1; i >= 0; i--) {
-      let b = balloons[i];
-      if (dist(mouseX, mouseY, b.x, b.y) < b.s / 2) {
-        clickedBalloon = true;
-        for (let j = 0; j < 15; j++)
-          popParticles.push({ x: b.x, y: b.y, vx: random(-2, 2), vy: random(-2, 2), life: 255, c: b.c });
-        balloons.splice(i, 1); score++; break;
+  if (screen === "dragdrop") {
+    for (let s of dragShapes) {
+      if (isMouseOverShape(s)) {
+        draggedShape = s;
+        break;
       }
     }
-    if (!clickedBalloon) {
-      gameActive = false;
-      screen = "gameover";
-    }
   }
+  if (screen === "balloon" && gameActive) handleBalloonClick();
   handleCanvasClick();
 }
 
-// 💥 Game Over Page
 function drawGameOver() {
   drawGarden();
-  textAlign(CENTER); textSize(40); fill("#ff4d6d"); textFont(fontRegular);
+  textAlign(CENTER);
+  textSize(40);
+  fill("#ff4d6d");
+  textFont(fontRegular);
   text("💥 Game Over 💥", width / 2, height / 2 - 40);
-  textSize(22); fill("#7a0043");
+  textSize(22);
+  fill("#7a0043");
   text(`Your Score: ${score}`, width / 2, height / 2 + 10);
   drawBackButton();
 }
@@ -174,9 +284,169 @@ function resetBalloonGame() {
 
 // ❓ How To
 function drawHowTo() {
-  textAlign(CENTER); textSize(26); fill("#7a0043"); textFont(fontRegular);
+  textAlign(CENTER);
+  textSize(26);
+  fill("#7a0043");
+  textFont(fontRegular);
   text("❓ How to Play ❓", width / 2, 100);
   textSize(18);
-  text("🎈 Pop balloons by clicking!\n🚫 Clicking the background ends the game.\n\n🏡 Press 'Return to Home' to go back.", width / 2, height / 2);
+  text(
+    "🎈 Pop balloons by clicking!\n🚫 Clicking background ends the game.\n🟣 Drag and drop the right shape!\n\n🏡 Press 'Return to Home' to go back.",
+    width / 2,
+    height / 2
+  );
   drawBackButton();
+}
+
+// 🟣 SHAPE DRAG & DROP GAME (with Victory + More Shapes)
+function startShapeDragGame() {
+  dragShapes = [];
+  for (let i = 0; i < shapeList.length; i++) {
+    dragShapes.push({
+      type: shapeList[i],
+      x: 120 + i * 90,
+      y: 180,
+      size: 70,
+      color: color(random(100, 255), random(100, 255), random(100, 255))
+    });
+  }
+  targetShape = random(shapeList);
+  draggedShape = null;
+  feedbackMsg = "";
+  feedbackTimer = 0;
+  dragScore = 0;
+  gameWon = false;
+}
+
+function drawShapeDragGame() {
+  drawGarden();
+  textAlign(CENTER);
+  textFont(fontRegular);
+  fill("#7a0043");
+  textSize(32);
+  text("🟣 Shape Drag & Drop 🟣", width / 2, 60);
+
+  textSize(20);
+  fill("#7a0043");
+  text(`Score: ${dragScore}`, width - 70, 40);
+
+  if (gameWon) {
+    textSize(40);
+    fill("green");
+    text("🎉 You Won! 🎉", width / 2, height / 2);
+    textSize(20);
+    fill("#7a0043");
+    text("Click Return to Home to play again!", width / 2, height / 2 + 40);
+    drawBackButton();
+    return;
+  }
+
+  // Target box
+  fill("#fff6f8");
+  stroke("#ff8ba0");
+  strokeWeight(3);
+  rectMode(CENTER);
+  rect(width / 2, height - 80, 180, 100, 20);
+  noStroke();
+  fill("#7a0043");
+  textSize(20);
+  text("Drop the " + targetShape + " here!", width / 2, height - 120);
+
+  // Draw shapes
+  for (let s of dragShapes) drawShape(s);
+
+  // Feedback
+  if (feedbackTimer > 0) {
+    fill(feedbackColor);
+    textSize(24);
+    text(feedbackMsg, width / 2, 120);
+    feedbackTimer--;
+  }
+  drawBackButton();
+}
+
+function drawShape(s) {
+  noStroke();
+  fill(s.color);
+  if (s.type === "circle") ellipse(s.x, s.y, s.size);
+  else if (s.type === "square")
+    rectMode(CENTER), rect(s.x, s.y, s.size, s.size, 10);
+  else if (s.type === "triangle")
+    triangle(
+      s.x,
+      s.y - s.size / 2,
+      s.x - s.size / 2,
+      s.y + s.size / 2,
+      s.x + s.size / 2,
+      s.y + s.size / 2
+    );
+  else if (s.type === "star") drawStar(s.x, s.y, s.size / 3, s.size / 1.2, 5);
+  else if (s.type === "heart") drawHeart(s.x, s.y, s.size);
+}
+
+function drawStar(x, y, r1, r2, n) {
+  let angle = TWO_PI / n, half = angle / 2;
+  beginShape();
+  for (let a = 0; a < TWO_PI; a += angle) {
+    vertex(x + cos(a) * r2, y + sin(a) * r2);
+    vertex(x + cos(a + half) * r1, y + sin(a + half) * r1);
+  }
+  endShape(CLOSE);
+}
+
+function drawHeart(x, y, s) {
+  beginShape();
+  vertex(x, y + s / 4);
+  bezierVertex(x - s / 2, y - s / 2, x - s, y + s / 3, x, y + s);
+  bezierVertex(x + s, y + s / 3, x + s / 2, y - s / 2, x, y + s / 4);
+  endShape(CLOSE);
+}
+
+function mouseDragged() {
+  if (screen === "dragdrop" && draggedShape) {
+    draggedShape.x = mouseX;
+    draggedShape.y = mouseY;
+  }
+}
+
+function mouseReleased() {
+  if (screen === "dragdrop" && draggedShape && !gameWon) {
+    let box = { x: width / 2, y: height - 80, w: 180, h: 100 };
+    if (
+      mouseX > box.x - box.w / 2 &&
+      mouseX < box.x + box.w / 2 &&
+      mouseY > box.y - box.h / 2 &&
+      mouseY < box.y + box.h / 2
+    ) {
+      if (draggedShape.type === targetShape) {
+        dragScore++;
+        feedbackMsg = "✅ Great job!";
+        feedbackColor = "green";
+        feedbackTimer = 120;
+
+        if (dragScore >= 10) {
+          gameWon = true;
+        } else {
+          targetShape = random(shapeList);
+        }
+      } else {
+        feedbackMsg = "❌ Try again!";
+        feedbackColor = "red";
+        feedbackTimer = 120;
+      }
+    }
+    draggedShape = null;
+  }
+}
+
+function isMouseOverShape(s) {
+  if (s.type === "circle") return dist(mouseX, mouseY, s.x, s.y) < s.size / 2;
+  else if (s.type === "square")
+    return (
+      mouseX > s.x - s.size / 2 &&
+      mouseX < s.x + s.size / 2 &&
+      mouseY > s.y - s.size / 2 &&
+      mouseY < s.y + s.size / 2
+    );
+  else return dist(mouseX, mouseY, s.x, s.y) < s.size / 1.2;
 }
