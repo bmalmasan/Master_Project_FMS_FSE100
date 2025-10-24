@@ -1,171 +1,197 @@
-let dragShapes = [];
-let targetShape = "";
-let draggedShape = null;
-let feedbackMsg = "";
-let feedbackColor = "#000";
-let feedbackTimer = 0;
-let dragScore = 0;
-let shapeList = ["circle", "square", "triangle", "star", "heart"];
-let gameWon = false;
+// ----------------------
+// 🟣 Shape Drag & Drop Game
+// ----------------------
+// Utility: Fisher-Yates shuffle (non-destructive)
+function shuffleArray(arr) {
+    let a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+        let j = floor(random(i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
 
 function startShapeDragGame() {
-  dragShapes = [];
-  for (let i = 0; i < shapeList.length; i++) {
-    dragShapes.push({
-      type: shapeList[i],
-      x: 120 + i * 90,
-      y: 180,
-      size: 70,
-      color: color(random(100, 255), random(100, 255), random(100, 255))
-    });
-  }
-  targetShape = random(shapeList);
-  draggedShape = null;
-  feedbackMsg = "";
-  feedbackTimer = 0;
-  gameWon = false;
+    // Initialize shapes in a neat row, store home positions
+    dragShapes = [];
+    let startX = 120;
+    let spacing = 90;
+
+    for (let i = 0; i < shapeList.length; i++) {
+        let s = {
+            type: shapeList[i],
+            x: startX + i * spacing,
+            y: 180,
+            homeX: startX + i * spacing,
+            homeY: 180,
+            size: 70,
+            color: color(random(100, 255), random(100, 255), random(100, 255)),
+            returning: false,
+            shakeTimer: 0,
+            locked: false
+        };
+        dragShapes.push(s);
+    }
+
+    // Make a non-repeating target queue
+    targetsQueue = shuffleArray(shapeList);
+    targetShape = targetsQueue.length ? targetsQueue[0] : "";
+    draggedShape = null;
+    feedbackMsg = "";
+    feedbackTimer = 0;
+    correctAttempts = 0;
+    totalAttempts = 0;
+    gameFinished = false;
 }
 
 function drawShapeDragGame() {
-  drawGarden();
-  textAlign(CENTER);
-  textFont(fontRegular);
-  fill("#7a0043");
-  textSize(32);
-  text("🟣 Shape Drag & Drop 🟣", width / 2, 60);
+    drawGarden();
 
-  textSize(20);
-  fill("#7a0043");
-  text(`Score: ${dragScore}`, width - 70, 40);
-
-  if (gameWon) {
-    textSize(40);
-    fill("green");
-    text("🎉 You Won! 🎉", width / 2, height / 2);
-    textSize(20);
+    // Header
+    textAlign(CENTER);
+    textFont(fontRegular);
     fill("#7a0043");
-    text("Click Return to Home to play again!", width / 2, height / 2 + 40);
+    textSize(32);
+    text("🟣 Shape Drag & Drop 🟣", width / 2, 60);
+    textSize(18);
+    fill("#7a0043");
+    text(`Correct: ${correctAttempts} / Attempts: ${totalAttempts}`, width - 300, 90);
+
+    if (gameFinished) {
+        screen = "dragcomplete";
+        return;
+    }
+
+    // Target box
+    fill("#fff6f8"); stroke("#ff8ba0"); strokeWeight(3);
+    rectMode(CENTER);
+    rect(width / 2, height - 80, 180, 100, 20);
+    noStroke(); fill("#7a0043"); textSize(20);
+    let displayTarget = targetShape || "";
+    text(displayTarget + " here! --->", width / 4.5, height - 80);
+
+    // Update & draw shapes
+    for (let s of dragShapes) updateShapeAnimation(s);
+    for (let s of dragShapes) drawShape(s);
+
+    // Feedback
+    if (feedbackTimer > 0) {
+        fill(feedbackColor);
+        textSize(24);
+        text(feedbackMsg, width / 2, 120);
+        feedbackTimer--;
+    }
+
     drawBackButton();
-    return;
-  }
+}
 
-  // Target box
-  fill("#fff6f8");
-  stroke("#ff8ba0");
-  strokeWeight(3);
-  rectMode(CENTER);
-  rect(width / 2, height - 80, 180, 100, 20);
-  noStroke();
-  fill("#7a0043");
-  textSize(20);
-  text("Drop the " + targetShape + " here!", width / 2, height - 120);
+// ----------------------
+// Shape Animations
+// ----------------------
+function updateShapeAnimation(s) {
+    if (s.locked) {
+        s.x = s.homeX; s.y = s.homeY; s.returning = false; s.shakeTimer = 0;
+        return;
+    }
 
-  // Draw shapes
-  for (let s of dragShapes) drawShape(s);
+    if (s.returning) {
+        s.x = lerp(s.x, s.homeX, 0.22);
+        s.y = lerp(s.y, s.homeY, 0.22);
 
-  // Feedback
-  if (feedbackTimer > 0) {
-    fill(feedbackColor);
-    textSize(24);
-    text(feedbackMsg, width / 2, 120);
-    feedbackTimer--;
-  }
-  drawBackButton();
+        if (abs(s.x - s.homeX) < 0.5 && abs(s.y - s.homeY) < 0.5) {
+            s.x = s.homeX; s.y = s.homeY; s.returning = false; s.shakeTimer = 0;
+        } else if (s.shakeTimer > 0) s.shakeTimer--;
+    }
+
+    if (!draggedShape && !s.returning && !s.locked) {
+        s.x = lerp(s.x, s.homeX, 0.08);
+        s.y = lerp(s.y, s.homeY, 0.08);
+    }
 }
 
 function drawShape(s) {
-  noStroke();
-  fill(s.color);
-  if (s.type === "circle") ellipse(s.x, s.y, s.size);
-  else if (s.type === "square")
-    rectMode(CENTER), rect(s.x, s.y, s.size, s.size, 10);
-  else if (s.type === "triangle")
-    triangle(
-      s.x,
-      s.y - s.size / 2,
-      s.x - s.size / 2,
-      s.y + s.size / 2,
-      s.x + s.size / 2,
-      s.y + s.size / 2
-    );
-  else if (s.type === "star") drawStar(s.x, s.y, s.size / 3, s.size / 1.2, 5);
-  else if (s.type === "heart") drawHeart(s.x, s.y, s.size);
+    push(); translate(s.x, s.y);
+    let shakeX = 0, shakeY = 0;
+    if (s.shakeTimer > 0) {
+        shakeX = random(-4, 4); shakeY = random(-2, 2);
+    }
+    translate(shakeX, shakeY);
+    noStroke(); fill(s.color);
+
+    if (s.type === "circle") ellipse(0, 0, s.size);
+    else if (s.type === "square") rectMode(CENTER), rect(0, 0, s.size, s.size, 10);
+    else if (s.type === "triangle") triangle(0, -s.size / 2, -s.size / 2, s.size / 2, s.size / 2, s.size / 2);
+    else if (s.type === "star") drawStar(0, 0, s.size / 3, s.size / 1.2, 5);
+    else if (s.type === "heart") drawHeart(0, 0, s.size);
+
+    pop();
 }
 
 function drawStar(x, y, r1, r2, n) {
-  let angle = TWO_PI / n, half = angle / 2;
-  beginShape();
-  for (let a = 0; a < TWO_PI; a += angle) {
-    vertex(x + cos(a) * r2, y + sin(a) * r2);
-    vertex(x + cos(a + half) * r1, y + sin(a + half) * r1);
-  }
-  endShape(CLOSE);
+    let angle = TWO_PI / n, half = angle / 2;
+    beginShape();
+    for (let a = 0; a < TWO_PI; a += angle) {
+        vertex(x + cos(a) * r2, y + sin(a) * r2);
+        vertex(x + cos(a + half) * r1, y + sin(a + half) * r1);
+    }
+    endShape(CLOSE);
 }
 
 function drawHeart(x, y, s) {
-  beginShape();
-  vertex(x, y + s / 4);
-  bezierVertex(x - s / 2, y - s / 2, x - s, y + s / 3, x, y + s);
-  bezierVertex(x + s, y + s / 3, x + s / 2, y - s / 2, x, y + s / 4);
-  endShape(CLOSE);
+    beginShape();
+    vertex(x, y + s / 4);
+    bezierVertex(x - s / 2, y - s / 2, x - s, y + s / 3, x, y + s);
+    bezierVertex(x + s, y + s / 3, x + s / 2, y - s / 2, x, y + s / 4);
+    endShape(CLOSE);
 }
 
 function mouseDragged() {
-  if (screen === "dragdrop" && draggedShape) {
-    draggedShape.x = mouseX;
-    draggedShape.y = mouseY;
-  }
+    if (screen === "dragdrop" && draggedShape && !draggedShape.locked) {
+        draggedShape.x = mouseX;
+        draggedShape.y = mouseY;
+        draggedShape.returning = false;
+    }
 }
 
 function mouseReleased() {
-  if (screen === "dragdrop" && draggedShape && !gameWon) {
-    let box = { x: width / 2, y: height - 80, w: 180, h: 100 };
-    if (
-      mouseX > box.x - box.w / 2 &&
-      mouseX < box.x + box.w / 2 &&
-      mouseY > box.y - box.h / 2 &&
-      mouseY < box.y + box.h / 2
-    ) {
-      if (draggedShape.type === targetShape) {
-        dragScore++;
-        feedbackMsg = "✅ Great job!";
-        feedbackColor = "green";
-        feedbackTimer = 120;
-
-        if (dragScore >= 10) {
-          gameWon = true;
+    if (screen === "dragdrop" && draggedShape && !gameFinished) {
+        let box = { x: width / 2, y: height - 80, w: 180, h: 100 };
+        if (
+            mouseX > box.x - box.w / 2 &&
+            mouseX < box.x + box.w / 2 &&
+            mouseY > box.y - box.h / 2 &&
+            mouseY < box.y + box.h / 2
+        ) {
+            totalAttempts++;
+            if (draggedShape.type === targetShape) {
+                // Correct
+                correctAttempts++;
+                feedbackMsg = "✅ Great job!"; feedbackColor = "green"; feedbackTimer = 120;
+                draggedShape.x = box.x + random(-20, 20);
+                draggedShape.y = box.y + random(-10, 10);
+                draggedShape.locked = true;
+                targetsQueue.shift();
+                targetShape = targetsQueue.length ? targetsQueue[0] : "";
+                if (!targetShape) gameFinished = true;
+            } else {
+                // Wrong
+                feedbackMsg = "❌ Try again!";
+                feedbackColor = "red";
+                feedbackTimer = 120;
+                draggedShape.returning = true;
+                draggedShape.shakeTimer = 30;
+            }
         } else {
-          targetShape = random(shapeList);
+            draggedShape.returning = true;
         }
-      } else {
-        feedbackMsg = "❌ Try again!";
-        feedbackColor = "red";
-        feedbackTimer = 120;
-      }
-    }
-    draggedShape = null;
-  }
-}
 
-function mousePressed() {
-  if (screen === "dragdrop") {
-    for (let s of dragShapes) {
-      if (isMouseOverShape(s)) {
-        draggedShape = s;
-        break;
-      }
+        draggedShape = null;
     }
-  }
 }
 
 function isMouseOverShape(s) {
-  if (s.type === "circle") return dist(mouseX, mouseY, s.x, s.y) < s.size / 2;
-  else if (s.type === "square")
-    return (
-      mouseX > s.x - s.size / 2 &&
-      mouseX < s.x + s.size / 2 &&
-      mouseY > s.y - s.size / 2 &&
-      mouseY < s.y + s.size / 2
-    );
-  else return dist(mouseX, mouseY, s.x, s.y) < s.size / 1.2;
+    if (s.type === "circle") return dist(mouseX, mouseY, s.x, s.y) < s.size / 2;
+    else if (s.type === "square") return mouseX > s.x - s.size / 2 && mouseX < s.x + s.size / 2 &&
+        mouseY > s.y - s.size / 2 && mouseY < s.y + s.size / 2;
+    else return dist(mouseX, mouseY, s.x, s.y) < s.size / 1.2;
 }
