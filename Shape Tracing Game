@@ -1,0 +1,214 @@
+// ----------------------
+// Start the Shape Tracing Game
+// ----------------------
+function startShapeTracingGame() {
+  hideTracingCompletionButtons();
+  tracingIndex = 0;
+  tracingShape = tracingShapes[tracingIndex];
+  drawnPoints = [];
+  tracingFeedback = "";
+  tracingFeedbackTimer = 0;
+  tracingComplete = false;
+  tracingCorrect = 0;
+  tracingAttempts = 0;
+  generateTracingPoints(tracingShape);
+  screen = "tracing";
+  for (let k in buttons) buttons[k].hide();
+}
+
+// ----------------------
+// Generate Points for Tracing Shapes
+// ----------------------
+function generateTracingPoints(shape) {
+  tracingPoints = [];
+  let cx = width / 2, cy = height / 2 + 20, size = 120;
+
+  if (shape === "circle") {
+    for (let a = 0; a < TWO_PI; a += 0.1) {
+      tracingPoints.push({ x: cx + cos(a) * size / 2, y: cy + sin(a) * size / 2 });
+    }
+  } else if (shape === "square") {
+    let s = size / 2;
+    tracingPoints = [
+      { x: cx - s, y: cy - s },
+      { x: cx + s, y: cy - s },
+      { x: cx + s, y: cy + s },
+      { x: cx - s, y: cy + s }
+    ];
+  } else if (shape === "triangle") {
+    let s = size / 2;
+    tracingPoints = [
+      { x: cx, y: cy - s },
+      { x: cx - s, y: cy + s },
+      { x: cx + s, y: cy + s }
+    ];
+  } else if (shape === "star") {
+    for (let a = 0; a < TWO_PI; a += TWO_PI / 5) {
+      tracingPoints.push({ x: cx + cos(a) * size / 2, y: cy + sin(a) * size / 2 });
+      tracingPoints.push({ x: cx + cos(a + PI / 5) * size / 4, y: cy + sin(a + PI / 5) * size / 4 });
+    }
+  } else if (shape === "heart") {
+    for (let a = 0; a < PI; a += 0.05) {
+      let x = 16 * pow(sin(a), 3);
+      let y = 13 * cos(a) - 5 * cos(2 * a) - 2 * cos(3 * a) - cos(4 * a);
+      tracingPoints.push({ x: cx + x * 5, y: cy - y * 5 });
+    }
+  }
+}
+
+// ----------------------
+// Draw the Shape Tracing Game
+// ----------------------
+function drawShapeTracingGame() {
+  drawGarden();
+  textAlign(CENTER);
+  textFont(fontRegular);
+  fill("#7a0043");
+  textSize(32);
+  text("🔺 Shape Tracing Game 🔺", width / 2, 50);
+
+  // Draw target shape outline
+  stroke(200);
+  noFill();
+  strokeWeight(2);
+  beginShape();
+  for (let p of tracingPoints) vertex(p.x, p.y);
+  endShape(CLOSE);
+
+  // Draw user strokes
+  noFill();
+  stroke("#7a0043");
+  strokeWeight(3);
+  beginShape();
+  for (let p of drawnPoints) vertex(p.x, p.y);
+  endShape();
+
+  // Feedback message
+  if (tracingFeedbackTimer > 0) {
+    fill(tracingFeedback === "✅ Great tracing!" ? "green" : "red");
+    noStroke();
+    textSize(24);
+    text(tracingFeedback, width / 2, 100);
+    tracingFeedbackTimer--;
+  }
+
+  drawBackButton();
+}
+
+// ----------------------
+// Check Accuracy of Tracing
+// ----------------------
+function checkTracingAccuracy() {
+  tracingAttempts++;
+
+  if (drawnPoints.length < 10) {
+    tracingFeedback = "❌ Too short! Try again.";
+    tracingFeedbackTimer = 120;
+    drawnPoints = [];
+    return;
+  }
+
+  // Compare distance from traced path to shape outline
+  let totalDist = 0;
+  for (let p of drawnPoints) {
+    let minD = Infinity;
+    for (let t of tracingPoints) {
+      let d = dist(p.x, p.y, t.x, t.y);
+      if (d < minD) minD = d;
+    }
+    totalDist += minD;
+  }
+  let avgDist = totalDist / drawnPoints.length;
+
+  if (avgDist < 25) {
+    tracingFeedback = "✅ Great tracing!";
+    tracingFeedbackTimer = 100;
+    tracingCorrect++;
+    tracingIndex++;
+    if (tracingIndex >= tracingShapes.length) {
+      setTimeout(() => finishTracingGame(), 300);
+    } else {
+      tracingShape = tracingShapes[tracingIndex];
+      generateTracingPoints(tracingShape);
+    }
+  } else {
+    tracingFeedback = "❌ Try to follow the outline!";
+    tracingFeedbackTimer = 100;
+  }
+
+  drawnPoints = [];
+}
+
+// ----------------------
+// Finish the Tracing Game
+// ----------------------
+function finishTracingGame() {
+  screen = "tracingcomplete";
+  showTracingCompletionButtons();
+}
+
+// ----------------------
+// Completion Buttons
+// ----------------------
+function showTracingCompletionButtons() {
+  hideTracingCompletionButtons();
+
+  let buttonWidth = 140;
+  let buttonHeight = 36;
+  let spacing = 20;
+
+  tracingHomeButton = createButton("🏡 Return Home");
+  tracingHomeButton.size(buttonWidth, buttonHeight);
+  tracingHomeButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFD1DC;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
+  tracingHomeButton.position(width / 2 - buttonWidth - spacing, height - 120);
+  tracingHomeButton.mousePressed(() => {
+    resetTracingGame();
+    screen = "home";
+    for (let k in buttons) buttons[k].show();
+    hideTracingCompletionButtons();
+  });
+
+  tracingPlayAgainButton = createButton("🔁 Play Again");
+  tracingPlayAgainButton.size(buttonWidth, buttonHeight);
+  tracingPlayAgainButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFD1DC;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
+  tracingPlayAgainButton.position(width / 2 + spacing, height - 120);
+  tracingPlayAgainButton.mousePressed(() => {
+    startShapeTracingGame();
+    hideTracingCompletionButtons();
+    screen = "tracing";
+  });
+}
+
+function hideTracingCompletionButtons() {
+  if (tracingHomeButton) { tracingHomeButton.remove(); tracingHomeButton = null; }
+  if (tracingPlayAgainButton) { tracingPlayAgainButton.remove(); tracingPlayAgainButton = null; }
+}
+
+// ----------------------
+// Reset Tracing Game
+// ----------------------
+function resetTracingGame() {
+  tracingIndex = 0;
+  tracingShape = tracingShapes[tracingIndex];
+  drawnPoints = [];
+  tracingFeedback = "";
+  tracingFeedbackTimer = 0;
+  tracingCorrect = 0;
+  tracingAttempts = 0;
+  generateTracingPoints(tracingShape);
+}
+
+// ----------------------
+// Draw Completion Screen
+// ----------------------
+function drawTracingComplete() {
+  drawGarden();
+  textAlign(CENTER);
+  textFont(fontRegular);
+  fill("#2e7d32");
+  textSize(36);
+  text("🎉 Great Job! 🎉", width / 2, height / 2 - 40);
+  textSize(20);
+  fill("#7a0043");
+  text(`You traced ${tracingCorrect} shapes out of ${tracingAttempts} attempts.`, width / 2, height / 2);
+}
