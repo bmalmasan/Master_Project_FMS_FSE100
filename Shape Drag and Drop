@@ -1,5 +1,5 @@
 // ----------------------
-// 🟣 Shape Drag & Drop Game
+// 🟣 Shape Drag & Drop
 // ----------------------
 function shuffleArray(arr) {
     let a = arr.slice();
@@ -11,9 +11,7 @@ function shuffleArray(arr) {
 }
 
 function startShapeDragGame() {
-    // Hide completion buttons in case they exist
     hideCompletionButtons();
-
     dragShapes = [];
     let startX = 120;
     let spacing = 90;
@@ -43,7 +41,6 @@ function startShapeDragGame() {
     totalAttempts = 0;
     gameFinished = false;
 
-    // Make sure screen and DOM buttons are consistent
     screen = "dragdrop";
     for (let k in buttons) buttons[k].hide();
     hideCompletionButtons();
@@ -51,7 +48,6 @@ function startShapeDragGame() {
 
 function drawShapeDragGame() {
     drawGarden();
-
     textAlign(CENTER);
     textFont(fontRegular);
     fill("#7a0043");
@@ -61,18 +57,15 @@ function drawShapeDragGame() {
     fill("#7a0043");
     text(`Correct: ${correctAttempts} / Attempts: ${totalAttempts}`, width - 300, 90);
 
-    // Update & draw shapes
     for (let s of dragShapes) updateShapeAnimation(s);
     for (let s of dragShapes) drawShape(s);
 
-    // Target box
     fill("#fff6f8"); stroke("#ff8ba0"); strokeWeight(3);
     rectMode(CENTER);
     rect(width / 2, height - 80, 180, 100, 20);
     noStroke(); fill("#7a0043"); textSize(20);
     text((targetShape || "") + " here! --->", width / 4.5, height - 80);
 
-    // Feedback
     if (feedbackTimer > 0) {
         fill(feedbackColor);
         textSize(24);
@@ -83,75 +76,134 @@ function drawShapeDragGame() {
     drawBackButton();
 }
 
-// ----------------------
-// Shape Animations
-// ----------------------
 function updateShapeAnimation(s) {
     if (s.locked) {
-        // Keep locked ones near the target area
-        // if we set home to target, position them there
         s.x = lerp(s.x, s.homeX, 0.12);
         s.y = lerp(s.y, s.homeY, 0.12);
         s.returning = false; s.shakeTimer = 0;
         return;
     }
-
     if (s.returning) {
         s.x = lerp(s.x, s.homeX, 0.22);
         s.y = lerp(s.y, s.homeY, 0.22);
-
-        if (abs(s.x - s.homeX) < 0.5 && abs(s.y - s.homeY) < 0.5) {
-            s.x = s.homeX; s.y = s.homeY; s.returning = false; s.shakeTimer = 0;
-        } else if (s.shakeTimer > 0) s.shakeTimer--;
+        if (dist(s.x, s.y, s.homeX, s.homeY) < 1) s.returning = false;
     }
-
-    if (!draggedShape && !s.returning && !s.locked) {
-        s.x = lerp(s.x, s.homeX, 0.08);
-        s.y = lerp(s.y, s.homeY, 0.08);
-    }
+    if (s.shakeTimer > 0) s.shakeTimer--;
 }
 
 function drawShape(s) {
-    push(); translate(s.x, s.y);
-    let shakeX = 0, shakeY = 0;
-    if (s.shakeTimer > 0) {
-        shakeX = random(-4, 4); shakeY = random(-2, 2);
+    push();
+    translate(s.x + (s.shakeTimer > 0 ? random(-5, 5) : 0), s.y);
+    fill(s.color); stroke("#7a0043"); strokeWeight(2);
+    switch (s.type) {
+        case "circle": ellipse(0, 0, s.size); break;
+        case "square": rectMode(CENTER); rect(0, 0, s.size, s.size); break;
+        case "triangle":
+            triangle(-s.size / 2, s.size / 2, 0, -s.size / 2, s.size / 2, s.size / 2);
+            break;
+        case "star":
+            drawStar(0, 0, s.size / 2, s.size / 1.5, 5); break;
+        case "heart": drawHeart(0, 0, s.size); break;
     }
-    translate(shakeX, shakeY);
-    noStroke(); fill(s.color);
-
-    if (s.type === "circle") ellipse(0, 0, s.size);
-    else if (s.type === "square") { rectMode(CENTER); rect(0, 0, s.size, s.size, 10); }
-    else if (s.type === "triangle") triangle(0, -s.size / 2, -s.size / 2, s.size / 2, s.size / 2, s.size / 2);
-    else if (s.type === "star") drawStar(0, 0, s.size / 3, s.size / 1.2, 5);
-    else if (s.type === "heart") drawHeart(0, 0, s.size);
-
     pop();
 }
 
-function drawStar(x, y, r1, r2, n) {
-    let angle = TWO_PI / n, half = angle / 2;
+function drawStar(x, y, radius1, radius2, npoints) {
+    let angle = TWO_PI / npoints;
+    let halfAngle = angle / 2.0;
     beginShape();
     for (let a = 0; a < TWO_PI; a += angle) {
-        vertex(x + cos(a) * r2, y + sin(a) * r2);
-        vertex(x + cos(a + half) * r1, y + sin(a + half) * r1);
+        let sx = x + cos(a) * radius2;
+        let sy = y + sin(a) * radius2;
+        vertex(sx, sy);
+        sx = x + cos(a + halfAngle) * radius1;
+        sy = y + sin(a + halfAngle) * radius1;
+        vertex(sx, sy);
     }
     endShape(CLOSE);
 }
 
-function drawHeart(x, y, s) {
+function drawHeart(x, y, size) {
     beginShape();
-    vertex(x, y + s / 4);
-    bezierVertex(x - s / 2, y - s / 2, x - s, y + s / 3, x, y + s);
-    bezierVertex(x + s, y + s / 3, x + s / 2, y - s / 2, x, y + s / 4);
+    vertex(x, y);
+    bezierVertex(x - size / 2, y - size / 2, x - size, y + size / 3, x, y + size);
+    bezierVertex(x + size, y + size / 3, x + size / 2, y - size / 2, x, y);
     endShape(CLOSE);
 }
 
-function isMouseOverShape(s) {
-    if (s.type === "circle") return dist(mouseX, mouseY, s.x, s.y) < s.size / 2;
-    else if (s.type === "square") return mouseX > s.x - s.size / 2 && mouseX < s.x + s.size / 2 &&
-        mouseY > s.y - s.size / 2 && mouseY < s.y + s.size / 2;
-    else return dist(mouseX, mouseY, s.x, s.y) < s.size / 1.2;
+function finishDragGame() {
+    gameFinished = true;
+    screen = "dragcomplete";
+    showCompletionButtons();
+}
+
+// ----------------------
+// Completion Buttons
+// ----------------------
+// ----------------------
+// Completion Buttons (use real p5 buttons so clicks always register)
+// ----------------------
+function hideCompletionButtons() {
+    if (completionHomeButton) {
+        completionHomeButton.remove();
+        completionHomeButton = null;
+    }
+    if (completionPlayAgainButton) {
+        completionPlayAgainButton.remove();
+        completionPlayAgainButton = null;
+    }
+}
+
+function showCompletionButtons() {
+    hideCompletionButtons(); // ensure no duplicates
+
+    let buttonWidth = 140;
+    let buttonHeight = 36;
+    let spacing = 40;
+    let totalWidth = buttonWidth * 2 + spacing;
+    let startX = (width - totalWidth) / 2;
+
+    // Return Home button
+    completionHomeButton = createButton("🏡 Return Home");
+    completionHomeButton.size(buttonWidth, buttonHeight);
+    completionHomeButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFD1DC;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
+    completionHomeButton.position(startX, height - 100);
+    completionHomeButton.mousePressed(() => {
+        resetBalloonGame();
+        screen = "home";
+        for (let k in buttons) buttons[k].show();
+        hideCompletionButtons();
+    });
+
+    // Play Again button
+    completionPlayAgainButton = createButton("🔁 Play Again");
+    completionPlayAgainButton.size(buttonWidth, buttonHeight);
+    completionPlayAgainButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFD1DC;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
+    completionPlayAgainButton.position(startX + buttonWidth + spacing, height - 100);
+    completionPlayAgainButton.mousePressed(() => {
+        startShapeDragGame();
+        hideCompletionButtons();
+        screen = "dragdrop";
+    });
+}
+
+
+
+// ----------------------
+// Drag & Drop Mouse Handling
+// ----------------------
+function mousePressed() {
+    if (screen === "balloon" && gameActive) handleBalloonClick();
+
+    if (screen === "dragdrop") {
+        for (let i = dragShapes.length - 1; i >= 0; i--) {
+            let s = dragShapes[i];
+            if (dist(mouseX, mouseY, s.x, s.y) < s.size / 2 && !s.locked) {
+                draggedShape = s;
+                break;
+            }
+        }
+    }
 }
 
 function mouseDragged() {
@@ -159,6 +211,8 @@ function mouseDragged() {
         draggedShape.x = mouseX;
         draggedShape.y = mouseY;
         draggedShape.returning = false;
+    } else if (screen === "tracing" && !tracingComplete) {
+        drawnPoints.push({ x: mouseX, y: mouseY });
     }
 }
 
@@ -173,10 +227,10 @@ function mouseReleased() {
         ) {
             totalAttempts++;
             if (draggedShape.type === targetShape) {
-                // Correct
                 correctAttempts++;
-                feedbackMsg = "✅ Great job!"; feedbackColor = "green"; feedbackTimer = 120;
-                // lock the shape near the target area (spread slightly)
+                feedbackMsg = "✅ Great job!";
+                feedbackColor = "green";
+                feedbackTimer = 120;
                 draggedShape.homeX = box.x + random(-40, 40);
                 draggedShape.homeY = box.y + random(-10, 10);
                 draggedShape.locked = true;
@@ -185,12 +239,8 @@ function mouseReleased() {
                 targetsQueue.shift();
                 targetShape = targetsQueue.length ? targetsQueue[0] : "";
 
-                if (!targetShape) {
-                    // finished — use a small delay then show completion UI
-                    setTimeout(() => finishDragGame(), 300);
-                }
+                if (!targetShape) setTimeout(() => finishDragGame(), 300);
             } else {
-                // Wrong
                 feedbackMsg = "❌ Try again!";
                 feedbackColor = "red";
                 feedbackTimer = 120;
@@ -201,67 +251,7 @@ function mouseReleased() {
             draggedShape.returning = true;
         }
         draggedShape = null;
+    } else if (screen === "tracing" && !tracingComplete) {
+        checkTracingAccuracy();
     }
-}
-
-// Called when the drag game is fully completed
-function finishDragGame() {
-    gameFinished = true;
-    screen = "dragcomplete";
-    showCompletionButtons();
-}
-
-// ----------------------
-// Completion Buttons (use real p5 buttons so clicks always register)
-// ----------------------
-function showCompletionButtons() {
-    hideCompletionButtons(); // ensure no duplicates
-
-    // Return Home button
-    completionHomeButton = createButton("🏡 Return Home");
-    completionHomeButton.size(140, 36);
-    completionHomeButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFB6C1;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
-    completionHomeButton.position(width / 2 - 75 - 70, height - 120 + 10); // align with drawn visuals
-    completionHomeButton.mousePressed(() => {
-        resetBalloonGame();
-        screen = "home";
-        for (let k in buttons) buttons[k].show();
-        hideCompletionButtons();
-    });
-
-    // Play Again button
-    completionPlayAgainButton = createButton("🔁 Play Again");
-    completionPlayAgainButton.size(140, 36);
-    completionPlayAgainButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFD1DC;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
-    completionPlayAgainButton.position(width / 2 + 75 - 70, height - 120 + 10);
-    completionPlayAgainButton.mousePressed(() => {
-        // Fully restart drag & drop
-        startShapeDragGame();
-        hideCompletionButtons();
-        screen = "dragdrop";
-    });
-}
-
-function hideCompletionButtons() {
-    if (completionHomeButton) {
-        completionHomeButton.remove();
-        completionHomeButton = null;
-    }
-    if (completionPlayAgainButton) {
-        completionPlayAgainButton.remove();
-        completionPlayAgainButton = null;
-    }
-}
-
-// ----------------------
-// 🎉 Completion Screen (visual only — real buttons handle clicks)
-// ----------------------
-function drawDragComplete() {
-    drawGarden();
-    textAlign(CENTER); textFont(fontRegular);
-    fill("#2e7d32"); textSize(36);
-    text("🎉 Good Job! 🎉", width / 2, height / 2 - 40);
-    textSize(20); fill("#7a0043");
-    text(`You identified ${correctAttempts} shapes with ${totalAttempts} attempts.`, width / 2, height / 2);
-
 }
