@@ -1,58 +1,125 @@
+// ----------------------
 // 🎈 Balloon Game
+// ----------------------
 function drawBalloonGame() {
-  drawGarden();
-  if (frameCount % 60 === 0 && balloons.length < 10)
-    balloons.push({ x: random(50, width - 50), y: height + 50, s: random(50, 90),
-      c: color(random(150, 255), random(100, 255), random(150, 255)), sp: random(1.2, 2.5), w: random(TWO_PI) });
-  for (let i = balloons.length - 1; i >= 0; i--) {
-    let b = balloons[i]; b.y -= b.sp; b.x += sin(frameCount * 0.05 + b.w) * 1.5;
-    stroke(150); line(b.x, b.y, b.x, b.y + 40); noStroke(); fill(b.c); ellipse(b.x, b.y, b.s * 0.9, b.s);
-    if (b.y < -50) balloons.splice(i, 1);
-  }
-  for (let i = popParticles.length - 1; i >= 0; i--) {
-    let p = popParticles[i]; p.x += p.vx; p.y += p.vy; p.life -= 3;
-    fill(p.c.levels[0], p.c.levels[1], p.c.levels[2], p.life); noStroke(); ellipse(p.x, p.y, 6);
-    if (p.life <= 0) popParticles.splice(i, 1);
-  }
-  noStroke(); fill("#7a0043"); textAlign(CENTER); textSize(32);
-  text("🎈 Balloon Popping Game 🎈", width / 2, 40); textSize(20);
-  text(`Score: ${score}`, width - 50, 30);
-  drawBackButton();
+    drawGarden();
+
+    // Spawn balloons
+    if (frameCount % 60 === 0 && balloons.length < 10) {
+        balloons.push({
+            x: random(50, width - 50),
+            y: height + 50,
+            s: random(50, 90),
+            c: color(random(150, 255), random(100, 255), random(150, 255)),
+            sp: random(1.2, 2.5),
+            w: random(TWO_PI)
+        });
+    }
+
+    // Update balloons
+    for (let i = balloons.length - 1; i >= 0; i--) {
+        let b = balloons[i];
+        b.y -= b.sp;
+        b.x += sin(frameCount * 0.05 + b.w) * 1.5;
+        stroke(150); line(b.x, b.y, b.x, b.y + 40);
+        noStroke(); fill(b.c);
+        ellipse(b.x, b.y, b.s * 0.9, b.s);
+        if (b.y < -50) balloons.splice(i, 1);
+    }
+
+    // Pop particles
+    for (let i = popParticles.length - 1; i >= 0; i--) {
+        let p = popParticles[i];
+        p.x += p.vx; p.y += p.vy; p.life -= 3;
+        fill(p.c.levels[0], p.c.levels[1], p.c.levels[2], p.life);
+        noStroke(); ellipse(p.x, p.y, 6);
+        if (p.life <= 0) popParticles.splice(i, 1);
+    }
+
+    // HUD
+    noStroke();
+    fill("#7a0043");
+    textAlign(CENTER); textSize(32); text("🎈 Balloon Popping Game 🎈", width / 2, 40);
+    textSize(20); text(`Score: ${score}`, width - 50, 30);
+
+    drawBackButton();
+}
+
+function handleBalloonClick() {
+    let clickedBalloon = false;
+
+    for (let i = balloons.length - 1; i >= 0; i--) {
+        let b = balloons[i];
+        if (dist(mouseX, mouseY, b.x, b.y) < b.s / 2) {
+            clickedBalloon = true;
+            for (let j = 0; j < 15; j++) {
+                popParticles.push({
+                    x: b.x,
+                    y: b.y,
+                    vx: random(-2, 2),
+                    vy: random(-2, 2),
+                    life: 255,
+                    c: b.c
+                });
+            }
+            balloons.splice(i, 1);
+            score++;
+            break;
+        }
+    }
+
+    if (!clickedBalloon) {
+        gameActive = false;
+        screen = "gameover";
+    }
 }
 
 function mousePressed() {
-  if (screen === "balloon" && gameActive) {
-    let clickedBalloon = false;
-    for (let i = balloons.length - 1; i >= 0; i--) {
-      let b = balloons[i];
-      if (dist(mouseX, mouseY, b.x, b.y) < b.s / 2) {
-        clickedBalloon = true;
-        for (let j = 0; j < 15; j++)
-          popParticles.push({ x: b.x, y: b.y, vx: random(-2, 2), vy: random(-2, 2), life: 255, c: b.c });
-        balloons.splice(i, 1); score++; break;
-      }
+    // Start dragging (only for dragdrop)
+    if (screen === "dragdrop") {
+        for (let s of dragShapes) {
+            if (isMouseOverShape(s) && !s.returning && !s.locked) {
+                draggedShape = s;
+                // bring to front (move last in array)
+                let idx = dragShapes.indexOf(s);
+                if (idx >= 0) {
+                    dragShapes.splice(idx, 1);
+                    dragShapes.push(s);
+                }
+                break;
+            }
+        }
     }
-    if (!clickedBalloon) {
-      gameActive = false;
-      screen = "gameover";
-    }
-  }
-  handleCanvasClick();
+
+    if (screen === "balloon" && gameActive) handleBalloonClick();
+
+    // Note: we call handleCanvasClick as well (for generic back/home)
+    handleCanvasClick();
 }
 
-// 💥 Game Over Page
 function drawGameOver() {
-  drawGarden();
-  textAlign(CENTER); textSize(40); fill("#ff4d6d"); textFont(fontRegular);
-  text("💥 Game Over 💥", width / 2, height / 2 - 40);
-  textSize(22); fill("#7a0043");
-  text(`Your Score: ${score}`, width / 2, height / 2 + 10);
-  drawBackButton();
+    drawGarden();
+    textAlign(CENTER);
+    textSize(40); fill("#ff4d6d"); textFont(fontRegular);
+    text("💥 Game Over 💥", width / 2, height / 2 - 40);
+    textSize(22); fill("#7a0043");
+    text(`Your Score: ${score}`, width / 2, height / 2 + 10);
+    drawBackButton();
 }
 
 function resetBalloonGame() {
-  score = 0;
-  balloons = [];
-  popParticles = [];
-  gameActive = false;
+    score = 0; balloons = []; popParticles = []; gameActive = false;
+}
+
+// ❓ How To
+function drawHowTo() {
+    textAlign(CENTER);
+    textSize(26); fill("#7a0043"); textFont(fontRegular);
+    text("❓ How to Play ❓", width / 2, 100);
+    textSize(18);
+    text(
+        "🎈 Pop balloons by clicking!\n🚫 Clicking background ends the game.\n🟣 Drag and drop the right shape!\n\n🏡 Press 'Return to Home' to go back.",
+        width / 2, height / 2
+    );
+    drawBackButton();
 }
