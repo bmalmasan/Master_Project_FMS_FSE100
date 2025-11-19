@@ -1,3 +1,4 @@
+
 // ----------------------
 // 🎈 Balloon Game
 // ----------------------
@@ -71,6 +72,7 @@ function handleBalloonClick() {
     if (!clickedBalloon) {
         gameActive = false;
         screen = "gameover";
+        showBalloonCompletionButtons();
     }
 }
 
@@ -103,9 +105,13 @@ function drawGameOver() {
     textSize(40); fill("#ff4d6d"); textFont(fontRegular);
     text("💥 Game Over 💥", width / 2, height / 2 - 40);
     textSize(22); fill("#7a0043");
-    text(`Your Score: ${score}`, width / 2, height / 2 + 10);
-    drawBackButton();
+    text(`Your Score: ${score}`, width / 2, height / 2);
+
+    // Show buttons
+    showBalloonCompletionButtons();
+    drawConfetti();
 }
+
 
 function resetBalloonGame() {
     score = 0; balloons = []; popParticles = []; gameActive = false;
