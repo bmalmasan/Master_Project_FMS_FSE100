@@ -64,7 +64,21 @@ function drawShapeDragGame() {
     rectMode(CENTER);
     rect(width / 2, height - 80, 180, 100, 20);
     noStroke(); fill("#7a0043"); textSize(20);
-    text((targetShape || "") + " here! --->", width / 4.5, height - 80);
+  
+    // Add a shape → emoji map
+const shapeEmojis = {
+  circle: "🔵",
+  square: "🟦",
+  triangle: "🔺",
+  star: "⭐",
+  heart: "❤️"
+};
+
+// Pick the matching emoji (or blank if none exists)
+let emoji = shapeEmojis[targetShape] || "";
+
+// Updated text line
+text((targetShape || "") + " " + emoji + " here! --->", width / 4.5, height - 80);
 
     if (feedbackTimer > 0) {
         fill(feedbackColor);
@@ -135,178 +149,4 @@ function finishDragGame() {
     gameFinished = true;
     screen = "dragcomplete";
     showCompletionButtons();
-}
-
-// ----------------------
-// Completion Buttons
-// ----------------------
-// ----------------------
-// Completion Buttons (use real p5 buttons so clicks always register)
-// ----------------------
-function hideCompletionButtons() {
-    if (completionHomeButton) {
-        completionHomeButton.remove();
-        completionHomeButton = null;
-    }
-    if (completionPlayAgainButton) {
-        completionPlayAgainButton.remove();
-        completionPlayAgainButton = null;
-    }
-}
-
-function showCompletionButtons() {
-    hideCompletionButtons(); // ensure no duplicates
-
-    let buttonWidth = 140;
-    let buttonHeight = 36;
-    let spacing = 40;
-    let totalWidth = buttonWidth * 2 + spacing;
-    let startX = (width - totalWidth) / 2;
-
-    // Return Home button
-    completionHomeButton = createButton("🏡 Return Home");
-    completionHomeButton.size(buttonWidth, buttonHeight);
-    completionHomeButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFD1DC;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
-    completionHomeButton.position(startX, height - 100);
-    completionHomeButton.mousePressed(() => {
-        resetBalloonGame();
-        screen = "home";
-        for (let k in buttons) buttons[k].show();
-        hideCompletionButtons();
-    });
-
-    // Play Again button
-    completionPlayAgainButton = createButton("🔁 Play Again");
-    completionPlayAgainButton.size(buttonWidth, buttonHeight);
-    completionPlayAgainButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFD1DC;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
-    completionPlayAgainButton.position(startX + buttonWidth + spacing, height - 100);
-    completionPlayAgainButton.mousePressed(() => {
-        startShapeDragGame();
-        hideCompletionButtons();
-        screen = "dragdrop";
-    });
-}
-
-
-
-// ----------------------
-// Drag & Drop Mouse Handling
-// ----------------------
-function mousePressed() {
-    if (screen === "balloon" && gameActive) handleBalloonClick();
-
-    if (screen === "dragdrop") {
-        for (let i = dragShapes.length - 1; i >= 0; i--) {
-            let s = dragShapes[i];
-            if (dist(mouseX, mouseY, s.x, s.y) < s.size / 2 && !s.locked) {
-                draggedShape = s;
-                break;
-            }
-        }
-    }
-}
-
-function mouseDragged() {
-    if (screen === "dragdrop" && draggedShape && !draggedShape.locked) {
-        draggedShape.x = mouseX;
-        draggedShape.y = mouseY;
-        draggedShape.returning = false;
-    } else if (screen === "tracing" && !tracingComplete) {
-        drawnPoints.push({ x: mouseX, y: mouseY });
-    }
-}
-
-function mouseReleased() {
-    if (screen === "dragdrop" && draggedShape && !gameFinished) {
-        let box = { x: width / 2, y: height - 80, w: 180, h: 100 };
-        if (
-            mouseX > box.x - box.w / 2 &&
-            mouseX < box.x + box.w / 2 &&
-            mouseY > box.y - box.h / 2 &&
-            mouseY < box.y + box.h / 2
-        ) {
-            totalAttempts++;
-            if (draggedShape.type === targetShape) {
-                correctAttempts++;
-                feedbackMsg = "✅ Great job!";
-                feedbackColor = "green";
-                feedbackTimer = 120;
-                draggedShape.homeX = box.x + random(-40, 40);
-                draggedShape.homeY = box.y + random(-10, 10);
-                draggedShape.locked = true;
-                draggedShape.returning = false;
-
-                targetsQueue.shift();
-                targetShape = targetsQueue.length ? targetsQueue[0] : "";
-
-                if (!targetShape) setTimeout(() => finishDragGame(), 300);
-            } else {
-                feedbackMsg = "❌ Try again!";
-                feedbackColor = "red";
-                feedbackTimer = 120;
-                draggedShape.returning = true;
-                draggedShape.shakeTimer = 30;
-            }
-        } else {
-            draggedShape.returning = true;
-        }
-        draggedShape = null;
-    } else if (screen === "tracing" && !tracingComplete) {
-        checkTracingAccuracy();
-    }
-}
-
-// ----------------------
-// Completion Buttons (use real p5 buttons so clicks always register)
-// ----------------------
-function showCompletionButtons() {
-    hideCompletionButtons(); // ensure no duplicates
-
-    // Return Home button
-    completionHomeButton = createButton("🏡 Return Home");
-    completionHomeButton.size(140, 36);
-    completionHomeButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFB6C1;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
-    completionHomeButton.position(width / 2 - 75 - 70, height - 120 + 10); // align with drawn visuals
-    completionHomeButton.mousePressed(() => {
-        resetBalloonGame();
-        screen = "home";
-        for (let k in buttons) buttons[k].show();
-        hideCompletionButtons();
-    });
-
-    // Play Again button
-    completionPlayAgainButton = createButton("🔁 Play Again");
-    completionPlayAgainButton.size(140, 36);
-    completionPlayAgainButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFD1DC;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
-    completionPlayAgainButton.position(width / 2 + 75 - 70, height - 120 + 10);
-    completionPlayAgainButton.mousePressed(() => {
-        // Fully restart drag & drop
-        startShapeDragGame();
-        hideCompletionButtons();
-        screen = "dragdrop";
-    });
-}
-
-function hideCompletionButtons() {
-    if (completionHomeButton) {
-        completionHomeButton.remove();
-        completionHomeButton = null;
-    }
-    if (completionPlayAgainButton) {
-        completionPlayAgainButton.remove();
-        completionPlayAgainButton = null;
-    }
-}
-
-// ----------------------
-// 🎉 Completion Screen (visual only — real buttons handle clicks)
-// ----------------------
-function drawDragComplete() {
-    drawGarden();
-    textAlign(CENTER); textFont(fontRegular);
-    fill("#2e7d32"); textSize(36);
-    text("🎉 Good Job! 🎉", width / 2, height / 2 - 40);
-    textSize(20); fill("#7a0043");
-    text(`You identified ${correctAttempts} shapes with ${totalAttempts} attempts.`, width / 2, height / 2);
-
 }
