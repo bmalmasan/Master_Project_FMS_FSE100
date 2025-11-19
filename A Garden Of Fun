@@ -60,8 +60,8 @@ function setup() {
     // Home menu buttons
     let opts = [
         "🎈 Balloon Popping Game",
-        "🔺 Shape Tracing Game",
-        "🟣 Shape Drag & Drop",
+        "🔲 Shape Tracing Game",
+        "👆 Shape Drag & Drop",
         "❓ How To Play"
     ];
     let screens = ["balloon", "tracing", "dragdrop", "howto"];
@@ -418,7 +418,21 @@ function drawShapeDragGame() {
     rectMode(CENTER);
     rect(width / 2, height - 80, 180, 100, 20);
     noStroke(); fill("#7a0043"); textSize(20);
-    text((targetShape || "") + " here! --->", width / 4.5, height - 80);
+  
+    // Add a shape → emoji map
+const shapeEmojis = {
+  circle: "🔵",
+  square: "🟦",
+  triangle: "🔺",
+  star: "⭐",
+  heart: "❤️"
+};
+
+// Pick the matching emoji (or blank if none exists)
+let emoji = shapeEmojis[targetShape] || "";
+
+// Updated text line
+text((targetShape || "") + " " + emoji + " here! --->", width / 4.5, height - 80);
 
     if (feedbackTimer > 0) {
         fill(feedbackColor);
@@ -727,13 +741,33 @@ function generateTracingPoints(shape) {
 // ----------------------
 // Draw the Shape Tracing Game
 // ----------------------
+const tracingEmojis = {
+  circle: "🟠",
+  square: "🟦",
+  triangle: "🔺",
+  star: "⭐",
+  heart: "🩷"
+};
+
+// Ask child which shape to draw
+  let emoji = tracingEmojis[tracingShape] || "";
+  textSize(28);
+  fill("#7a0043");
+  text("Draw the " + tracingShape + " " + emoji + "!", width / 2, 90);
+
+
 function drawShapeTracingGame() {
   drawGarden();
   textAlign(CENTER);
   textFont(fontRegular);
   fill("#7a0043");
   textSize(32);
-  text("🔺 Shape Tracing Game 🔺", width / 2, 50);
+  text("Shape Tracing Game", width / 2, 50);
+
+  // ⭐ NEW: Instruction with shape + emoji
+  let emoji = tracingEmojis[tracingShape] || "";
+  textSize(28);
+  text("Draw the " + tracingShape + " " + emoji + "!", width / 2, 90);
 
   // Draw target shape outline
   stroke(200);
@@ -752,20 +786,20 @@ function drawShapeTracingGame() {
   endShape();
 
   // Feedback message
-  if (tracingFeedbackTimer > 0) {
+    if (tracingFeedbackTimer > 0) {
     fill(tracingFeedback === "✅ Great tracing!" ? "green" : "red");
     noStroke();
     textSize(24);
-    text(tracingFeedback, width / 2, 100);
+    text(tracingFeedback, width / 2, 150);
     tracingFeedbackTimer--;
   }
 
   drawBackButton();
 }
-
 // ----------------------
 // Check Accuracy of Tracing
 // ----------------------
+
 function checkTracingAccuracy() {
   tracingAttempts++;
 
@@ -793,6 +827,7 @@ function checkTracingAccuracy() {
     tracingFeedbackTimer = 100;
     tracingCorrect++;
     tracingIndex++;
+
     if (tracingIndex >= tracingShapes.length) {
       setTimeout(() => finishTracingGame(), 300);
     } else {
@@ -806,6 +841,7 @@ function checkTracingAccuracy() {
 
   drawnPoints = [];
 }
+
 
 // ----------------------
 // Finish the Tracing Game
