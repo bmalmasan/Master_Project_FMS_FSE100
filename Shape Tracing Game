@@ -167,4 +167,6 @@ function checkTracingAccuracy() {
 function finishTracingGame() {
   screen = "tracingcomplete";
   showTracingCompletionButtons();
+  spawnConfetti();
+  awardBadge(); // add
 }
