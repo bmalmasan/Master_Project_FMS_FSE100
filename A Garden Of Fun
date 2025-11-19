@@ -299,6 +299,7 @@ function handleBalloonClick() {
     if (!clickedBalloon) {
         gameActive = false;
         screen = "gameover";
+        showBalloonCompletionButtons();
     }
 }
 
@@ -331,9 +332,12 @@ function drawGameOver() {
     textSize(40); fill("#ff4d6d"); textFont(fontRegular);
     text("💥 Game Over 💥", width / 2, height / 2 - 40);
     textSize(22); fill("#7a0043");
-    text(`Your Score: ${score}`, width / 2, height / 2 + 10);
-    drawBackButton();
+    text(`Your Score: ${score}`, width / 2, height / 2);
+
+    // Show buttons
+    showBalloonCompletionButtons();
 }
+
 
 function resetBalloonGame() {
     score = 0; balloons = []; popParticles = []; gameActive = false;
@@ -916,6 +920,42 @@ function drawTracingComplete() {
   fill("#7a0043");
   text(`You traced ${tracingCorrect} shapes out of ${tracingAttempts} attempts.`, width / 2, height / 2);
 }
+function hideAllCompletionButtons() {
+    if (completionHomeButton) { completionHomeButton.remove(); completionHomeButton = null; }
+    if (completionPlayAgainButton) { completionPlayAgainButton.remove(); completionPlayAgainButton = null; }
+}
+
+function showBalloonCompletionButtons() {
+    hideAllCompletionButtons(); // remove old buttons
+
+    let buttonWidth = 140;
+    let buttonHeight = 36;
+    let spacing = 20;
+
+    // Return Home button
+    completionHomeButton = createButton("🏡 Return Home");
+    completionHomeButton.size(buttonWidth, buttonHeight);
+    completionHomeButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFD1DC;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
+    completionHomeButton.position(width / 2 - buttonWidth - spacing, height - 120);
+    completionHomeButton.mousePressed(() => {
+        resetBalloonGame();
+        screen = "home";
+        for (let k in buttons) buttons[k].show();
+        hideAllCompletionButtons();
+    });
+
+    // Play Again button
+    completionPlayAgainButton = createButton("🔁 Play Again");
+    completionPlayAgainButton.size(buttonWidth, buttonHeight);
+    completionPlayAgainButton.style("font-family:Comic Sans MS;font-size:16px;background:#FFD1DC;border-radius:10px;border:2px solid #ff8ba0;color:#7a0043;");
+    completionPlayAgainButton.position(width / 2 + spacing, height - 120);
+    completionPlayAgainButton.mousePressed(() => {
+        resetBalloonGame();
+        changeScreen("balloon");
+        hideAllCompletionButtons();
+    });
+}
+
 // ----------------------
 // End of sketch
 // ----------------------
