@@ -42,6 +42,35 @@ let tracingPlayAgainButton = null;
 // Completion screen buttons (p5 DOM buttons)
 let completionHomeButton = null;
 let completionPlayAgainButton = null;
+let confettiParticles = [];
+
+
+//CONFETTI
+
+function spawnConfetti() {
+  for (let i = 0; i < 50; i++) {
+    confettiParticles.push({
+      x: random(width),
+      y: 0,
+      vx: random(-2, 2),
+      vy: random(1, 4),
+      color: color(random(255), random(255), random(255))
+    });
+  }
+}
+
+function drawConfetti() {
+  for (let i = confettiParticles.length - 1; i >= 0; i--) {
+    let p = confettiParticles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    fill(p.color);
+    noStroke();
+    ellipse(p.x, p.y, 8);
+    if (p.y > height) confettiParticles.splice(i, 1);
+  }
+}
+
 
 
 // ----------------------
@@ -336,6 +365,7 @@ function drawGameOver() {
 
     // Show buttons
     showBalloonCompletionButtons();
+    drawConfetti();
 }
 
 
@@ -504,9 +534,11 @@ function drawHeart(x, y, size) {
 }
 
 function finishDragGame() {
-    gameFinished = true;
-    screen = "dragcomplete";
-    showCompletionButtons();
+  gameFinished = true;
+  screen = "dragcomplete";
+  showCompletionButtons();
+  spawnConfetti();
+  awardBadge(); // add
 }
 
 // ----------------------
@@ -680,6 +712,8 @@ function drawDragComplete() {
     text("🎉 Good Job! 🎉", width / 2, height / 2 - 40);
     textSize(20); fill("#7a0043");
     text(`You identified ${correctAttempts} shapes with ${totalAttempts} attempts.`, width / 2, height / 2);
+  drawConfetti();
+
 
 }
 
@@ -853,6 +887,8 @@ function checkTracingAccuracy() {
 function finishTracingGame() {
   screen = "tracingcomplete";
   showTracingCompletionButtons();
+  spawnConfetti();
+  awardBadge(); // add
 }
 
 // ----------------------
@@ -919,6 +955,8 @@ function drawTracingComplete() {
   textSize(20);
   fill("#7a0043");
   text(`You traced ${tracingCorrect} shapes out of ${tracingAttempts} attempts.`, width / 2, height / 2);
+  drawConfetti();
+
 }
 function hideAllCompletionButtons() {
     if (completionHomeButton) { completionHomeButton.remove(); completionHomeButton = null; }
